@@ -213,10 +213,11 @@ void CronTimer::InitWheelIndex(){
                                                     ,wheels_[CronExpression::DT_WEEK].values[wheels_[CronExpression::DT_WEEK].cur_index]);
                     if(cur_mday <= GetMaxMDayFromCurrentMonth())
                         break;
+                    if(wheels_[i+1].cur_index < wheels_[i+1].values.size()-1){
+                        ++wheels_[i+1].cur_index;
+                    }
                 }
-                if(wheels_[i+1].cur_index < wheels_[i+1].values.size()-1){
-                    ++wheels_[i+1].cur_index;
-                }
+                
                 break;
             }
             else if(wheel.values[wheel.cur_index] < cur_time[i]){
