@@ -1,5 +1,5 @@
 # 可执行文件的名字
-TARGET = libcron_cpp.so
+TARGET = cron_cpp
 TARGET := $(addprefix ./,$(TARGET))
 # 方便起见一般都会先定义编译器链接器
 CC = g++ 
@@ -8,6 +8,7 @@ LD = gcc
 BUILD_DIR = temp
 # 正则表达式表示目录下所有.c文件，相当于：SRCS = main.c a.c b.c
 C_SOURCES = \
+$(wildcard ./*.cpp) \
 $(wildcard ./src/*.cpp)
 # 打印源文件路径
 $(warning $(C_SOURCES))
@@ -17,7 +18,8 @@ C_INCLUDES = \
 -Iinclude \
 -I/usr/include/python3.8
 # 编译标志
-CFLAGS = -shared -fPIC
+CFLAGS = -std=c++11
+# CFLAGS += -shared -fPIC
 # .PHONE伪目标，具体含义百度一下一大堆介绍
 .PHONY:all clean
 

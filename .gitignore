@@ -3,6 +3,9 @@
 /temp
 /.vscode
 
+# 忽略生成的可执行文件
+cron_cpp
+
 # 忽略一切.log后缀的文件
 *.log
 
