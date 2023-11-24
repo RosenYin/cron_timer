@@ -1,7 +1,7 @@
 ﻿# 设置CMake的最低版本要求
 cmake_minimum_required(VERSION 3.1)
 # 定义一个变量用来切换动态库还是可执行文件，0是可执行文件，1是动态库so
-set(CUSTOM_COMPILE_OPTIONS "0")
+set(CUSTOM_COMPILE_OPTIONS "1")
 # 定义项目名称
 set(PROJECT_NAME cron_timer)
 project(${PROJECT_NAME})
@@ -19,6 +19,7 @@ endif ()
 
 # 定义源文件列表
 set(SOURCE_FILES
+	${CMAKE_CURRENT_SOURCE_DIR}/src/cron_log.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/cron_python_interface.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/cron_text.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/src/cron_timer.cpp

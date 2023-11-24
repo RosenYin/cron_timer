@@ -5,7 +5,8 @@ import _thread
 import time
 from ctypes import *
 so = ctypes.cdll.LoadLibrary
-lib = so('./libcron_cpp.so') #刚刚生成的库文件的路径
+# lib = so('./libcron_cpp.so') #刚刚生成的库文件的路径
+lib = so('/home/agilex/VSCode_ws/C_CPP/cron_timer/build/libcron_timer.so') 
 # 使用 ctypes 库时定义 C 函数指针类型的一种方式。这用于告诉 ctypes 我们期望 C 函数指针指向的函数返回类型是 None，即没有返回值。
 # 如果你的 C++ 函数有其他的返回类型，你需要相应地调整 ctypes.CFUNCTYPE 中的参数，以确保类型匹配。
 # 例如，如果 C++ 函数返回 int，则可以使用 ctypes.CFUNCTYPE(ctypes.c_int)。
@@ -28,7 +29,7 @@ lib.AddTimerTask.restype = None#指定 AddTimerTask 函数的返回类型。
 cron_expression =   b"* * * ? * * 2023"
 cron_expression1 =  b"* * * ? * * 2023"
 # 增加定时任务
-lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback, 11, ctypes.c_int(-1))
+lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback, 33, ctypes.c_int(-1))
 lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, 22, ctypes.c_int(10))
 
 def Thread():
@@ -42,7 +43,7 @@ count = 0
 while True:
     count = count +1
     if(count > 5):
-        lib.StopAppointed(12)
+        lib.StopAppointed(33)
     # print("-------")
     # lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, 22, ctypes.c_int(10))
     time.sleep(1)

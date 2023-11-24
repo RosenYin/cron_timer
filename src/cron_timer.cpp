@@ -537,7 +537,7 @@ TimerPtr TimerMgr::AddTimer(const std::string& timer_string, FUNC_CALLBACK&& fun
         bool isWheelsDuplicate;
         std::vector<int>::iterator it = find(id_.begin(), id_.end(), id);
         if (it == id_.end()) {
-           isWheelsDuplicate = false;
+           isWheelsDuplicate = false; 
         }else {
             isWheelsDuplicate = true;
         }
