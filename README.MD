@@ -82,6 +82,12 @@
 
 在`CMakeLists.txt`文件中可以修改`CUSTOM_COMPILE_OPTIONS`的值，如果是"0"则为编译可执行文件，"1"为编译为so动态库文件
 
+例：
+```
+mkdir build && cd build
+cmake .. -DCUSTOM_COMPILE_OPTIONS="1"
+```
+
 ## Python调用
 
 先编译文件为so，再在python中调用
