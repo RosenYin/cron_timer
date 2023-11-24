@@ -1,5 +1,5 @@
 # 可执行文件的名字
-TARGET = cron_cpp
+TARGET = libcron_cpp.so
 TARGET := $(addprefix ./,$(TARGET))
 # 方便起见一般都会先定义编译器链接器
 CC = g++ 
@@ -19,7 +19,7 @@ C_INCLUDES = \
 -I/usr/include/python3.8
 # 编译标志
 CFLAGS = -std=c++11
-# CFLAGS += -shared -fPIC
+CFLAGS += -shared -fPIC
 # .PHONE伪目标，具体含义百度一下一大堆介绍
 .PHONY:all clean
 

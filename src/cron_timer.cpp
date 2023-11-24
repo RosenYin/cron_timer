@@ -12,7 +12,10 @@
 #include <algorithm>
 #include <chrono>
 #include <iomanip>
-
+#include <atomic>
+#include <thread>
+#include <cstdarg>
+#include "cron_log.h"
 namespace cron_timer {
 // 是否启用UTC时间
 #define USE_UTC 0
@@ -117,6 +120,11 @@ BaseTimer::BaseTimer(TimerMgr& owner, FUNC_CALLBACK&& func)
     , func_(std::move(func))
     , is_in_list_(false) {}
 
+BaseTimer::BaseTimer(TimerMgr& owner, FUNC_CALLBACK&& func, int id)
+    : owner_(owner)
+    , func_(std::move(func))
+    , is_in_list_(false) 
+    , id_(id) {}
 BaseTimer::~BaseTimer() {}
 /**
  * @brief 取消任务(将任务移除)
@@ -145,6 +153,15 @@ bool BaseTimer::compareCurWheelIndexTime(){
     if(diff.count() > -1) return true;
     else return false;
 }
+
+int BaseTimer::SetID(int id){
+    id_ = id;
+    return id_;
+}
+
+int BaseTimer::GetID(){
+    return id_;
+}
 //返回计时器在列表中的迭代器引用。
 std::list<TimerPtr>::iterator& BaseTimer::GetIt() { return it_; } 
 //设置计时器在列表中的迭代器。
@@ -171,20 +188,26 @@ CronTimer::CronTimer(TimerMgr& owner, std::vector<CronWheel>&& wheels, FUNC_CALL
     , wheels_(std::move(wheels))
     , over_flowed_(false)
     , count_left_(count){}
+
+CronTimer::CronTimer(TimerMgr& owner, std::vector<CronWheel>&& wheels, FUNC_CALLBACK&& func, int count, int id)
+    : BaseTimer(owner, std::move(func), id)
+    , wheels_(std::move(wheels))
+    , over_flowed_(false)
+    , count_left_(count){}
 /**
  * @brief 初始化时间轮的索引指向为当前或未来最近时间
  * 
  */
 void CronTimer::InitWheelIndex(){
-    // std::cout << std::endl;
-    // std::cout<<"初始化wheel索引....."<<std::endl;
+    std::cout << std::endl;
+    std::cout<<"初始化wheel索引....."<<std::endl;
     // 获取当前时间列表
     std::vector<int> cur_time = TimerMgr::GetNowTimeConvertVetcor();
-    // std::cout << std::endl;
-    // for (std::vector<int>::iterator i = cur_time.begin(); i != cur_time.end(); i++){
-    //     std::cout<<*i<<std::endl;
-    // }
-    // std::cout << std::endl;
+    std::cout << std::endl;
+    for (std::vector<int>::iterator i = cur_time.begin(); i != cur_time.end(); i++){
+        std::cout<<*i<<std::endl;
+    }
+    std::cout << std::endl;
     // 创建时间轮标志位，用来判断上一个时间轮是否大于或者小于当前时间
     // 如果为true则应该令之后的时间轮的索引指向为最初(0)
     bool last_wheel_less_all = false;
@@ -245,28 +268,36 @@ void CronTimer::InitWheelIndex(){
             }
         }
     }
-    // for (std::vector<CronWheel>::iterator i = wheels_.begin(); i != wheels_.end(); i++){
-    //     std::cout<<(*i).cur_index << " - "<<(*i).values[(*i).cur_index] << std::endl;
-    // }
-    // std::cout << std::endl;
+    for (std::vector<CronWheel>::iterator i = wheels_.begin(); i != wheels_.end(); i++){
+        std::cout<<(*i).cur_index << " - "<<(*i).values[(*i).cur_index] << std::endl;
+    }
+    std::cout << std::endl;
 }
 
 void CronTimer::DoFunc() {
 	// 当任务在列表中时
 	if (GetIsInList()) {
-        // 只有当前时间轮索引指向的时间大于-1才执行回调函数
-        if(compareCurWheelIndexTime()){
+        // Log("---------任务在列表中-------");
+        // 只有当前时间轮索引指向的时间与当前时间差值大于-1才执行回调函数
+        if(compareCurWheelIndexTime() && count_left_ != 0){
+            // Log("---------执行回调-------");
 	        func_();
+            // Log("---------执行完毕-------");
         }
 		auto self = shared_from_this();
-		owner_.remove(self); // 将当前计时器从计时器管理器的列表中移除
-
+		bool error = owner_.remove(self); // 将当前计时器从计时器管理器的列表中移除
+        // std::cout << "是否移除成功：" << error << std::endl;
+        if(!error)
+            Log("移除失败");
 		Next(CronExpression::DT_SECOND); // 将时间字段前进到下一个时间点，以便在下一个时间点触发任务,从s开始
 		// 检查是否需要继续触发计时器
-		if ((count_left_ <= TimerMgr::RUN_FOREVER || --count_left_ > 0) && !over_flowed_) {
+		if ((count_left_ == TimerMgr::RUN_FOREVER || --count_left_ > 0) && !over_flowed_) {
+            // Log("---------即将重新插入-------");
 			owner_.insert(self); // 将计时器重新插入计时器管理器的列表中，以便在下一个时间点再次触发
+            // Log("---------重新插入完毕-------");
 		}
 	}
+    // Log("任务不在列表");
 }
 /**
  * @brief Get the Cur Time object
@@ -361,6 +392,14 @@ LaterTimer::LaterTimer(TimerMgr& owner, int milliseconds, FUNC_CALLBACK&& func, 
 {
     Next();
 }
+LaterTimer::LaterTimer(TimerMgr& owner, int milliseconds, FUNC_CALLBACK&& func, int count, int id)
+    : BaseTimer(owner, std::move(func), id)
+    , mill_seconds_(milliseconds)
+    , count_left_(count)
+    , cur_time_(std::chrono::system_clock::now())
+{
+    Next();
+}
 /**
  * @brief 执行函动作，并将任务移除，判断任务执行次数或者执行模式是否是永久执行，重新将任务插入到列表中
  * 
@@ -430,7 +469,7 @@ void TimerMgr::Stop() {
  * @param count 定时器执行次数
  * @return TimerPtr 
  */
-TimerPtr TimerMgr::AddTimer(const std::string& timer_string, FUNC_CALLBACK&& func, int count) {
+TimerPtr TimerMgr::AddTimer(const std::string& timer_string, FUNC_CALLBACK&& func, int id, int count) {
     if (stopped_)
         return nullptr;
     // 分割字串然后存在容器v中，并检查长度是否是6或者7
@@ -474,31 +513,39 @@ TimerPtr TimerMgr::AddTimer(const std::string& timer_string, FUNC_CALLBACK&& fun
         wheels.emplace_back(wheel);//尾插入时间轮列表中
     }
 
-        // std::cout<<std::endl;
-		// for (std::vector<CronWheel>::iterator it = wheels.begin(); it != wheels.end(); it++)
-		// {
-		// 	for (std::vector<int>::iterator it1 = (*it).values.begin(); it1 != (*it).values.end(); it1++)
-		// 	{
-		// 		std::cout << (*it1) << " ";
+        std::cout<<std::endl;
+		for (std::vector<CronWheel>::iterator it = wheels.begin(); it != wheels.end(); it++)
+		{
+			for (std::vector<int>::iterator it1 = (*it).values.begin(); it1 != (*it).values.end(); it1++)
+			{
+				std::cout << (*it1) << " ";
 				
-		// 	}
-		// 	std::cout <<"wheel_type:" <<(*it).GetWheelType()  << "  ";
-		// 	std::cout <<"wheel_max:" <<(*it).max_value  << "  ";
-		// 	std::cout <<"wheel_min:" <<(*it).min_value  << "  ";
-		// 	std::cout <<std::endl<< "---------------------------";
-		// 	std::cout << std::endl;
-		// }
-		// std::cout << "<<<<<<<<<<<<<<<<<<<<<--------------------------->>>>>>>>>>>>>>>>>>>>>";
-		// std::cout << std::endl;
+			}
+			std::cout <<"wheel_type:" <<(*it).GetWheelType()  << "  ";
+			std::cout <<"wheel_max:" <<(*it).max_value  << "  ";
+			std::cout <<"wheel_min:" <<(*it).min_value  << "  ";
+			std::cout <<std::endl<< "---------------------------";
+			std::cout << std::endl;
+		}
+		std::cout << "<<<<<<<<<<<<<<<<<<<<<--------------------------->>>>>>>>>>>>>>>>>>>>>";
+		std::cout << std::endl;
 
     //创建 CronTimer 对象，并将其插入到定时器管理器中，最后返回该定时器对象的指针。
     bool time_reasonable_ = compareMaxSetTime(wheels);
     if(time_reasonable_)
     {
-        bool isWheelsDuplicate = judgeDuplicateWheelsInWheelsGather(wheels_gather_, wheels);
+        bool isWheelsDuplicate;
+        std::vector<int>::iterator it = find(id_.begin(), id_.end(), id);
+        if (it == id_.end()) {
+           isWheelsDuplicate = false;
+        }else {
+            isWheelsDuplicate = true;
+        }
         if(!isWheelsDuplicate){
             wheels_gather_.emplace_back(wheels);
-            auto p = std::make_shared<CronTimer>(*this, std::move(wheels), std::move(func), count);
+            id_.emplace_back(id);
+            auto p = std::make_shared<CronTimer>(*this, std::move(wheels), std::move(func), count, id);
+            id_pointer.insert(std::make_pair(id, p));
             p->InitWheelIndex();
             p->Next(CronExpression::DT_SECOND);
             insert(p);
@@ -520,7 +567,7 @@ TimerPtr TimerMgr::AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, int cou
         return nullptr;
     }
 
-    assert(milliseconds > 0);
+    assert(("设定的时间段需要大于0！！",milliseconds > 0));
     milliseconds = (std::max)(milliseconds, 1); //至少延迟 1 毫秒
     //创建 LaterTimer 对象，用于延时执行，然后将其插入到定时器管理器中，最后返回该定时器对象的指针。
     auto p = std::make_shared<LaterTimer>(*this, milliseconds, std::move(func), count);
@@ -528,6 +575,13 @@ TimerPtr TimerMgr::AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, int cou
     insert(p);
     return p;
 }
+
+bool TimerMgr::RemoveAppointedTimer(int id) {
+    auto it = id_pointer.find(id);
+    it->second->Cancel();
+    return true;
+}
+
 // 获取最接近的触发时间点
 std::chrono::system_clock::time_point TimerMgr::GetNearestTime() {
     auto it = timers_.begin();
@@ -544,23 +598,38 @@ size_t TimerMgr::Update() {
     //获取当前系统时间 time_now。
     auto time_now = std::chrono::system_clock::now();
     size_t count = 0;
-    // 遍历定时器列表，查找并执行已经到期的定时器任务。
+    // std::cout << "update timers 长度-----为： "<< timers_.size() << std::endl;
+    // std::cout << "update list 长度-----为： "<< timers_.begin()->second.size() << std::endl;
+    auto it_ = timers_.begin();
+    
+    // std::cout << "时间列表中时间为： "<< TimePointConvertInteger(it_->first) << std::endl;
     for (auto it = timers_.begin(); it != timers_.end();) {
         auto expire_time = it->first;
         auto& timer_list = it->second;
         if (expire_time > time_now) {
+            // Log("----------------------------------------时间大于");
             break;
         }
+
         // 如果某个定时器任务的触发时间小于当前系统时间，执行该任务
         while (!timer_list.empty()) {
+            // std::cout << "update timers_list 长度===__1---为： "<< timer_list.size() << std::endl;
             auto p = *timer_list.begin();
+            // Log("即将执行回调");
             p->DoFunc();
+            // Log("执行完毕");
+            // std::cout << "update timers_list 长度===__1---为： "<< timer_list.size() << std::endl;
             ++count;
         }
         // 将其从列表中移除。
+        // std::cout << "update timers 长度++++为： "<< timers_.size() << std::endl;
         it = timers_.erase(it);
+        // std::cout << "update timers 长度 为： "<< timers_.size() << std::endl;
+        // Log("============移除");
     }
     // 返回执行的任务数量
+    // std::cout << "update 执行次数为： "<< count << std::endl;
+    // std::cout << "update timers 长度-============为： "<< timers_.size() << std::endl;
     return count;
 }
 
@@ -573,45 +642,65 @@ int64_t TimerMgr::TimePointConvertInteger(std::chrono::system_clock::time_point 
 }
 
 void TimerMgr::insert(const TimerPtr& p) {
-    // 确保传入的定时器没有被插入到管理器中，即 GetIsInList() 返回 false。
-    assert(!p->GetIsInList());
+    if(p->GetIsInList())
+        Log("要插入的定时器已经存在！");
+    assert(("要插入的定时器已经存在！",!p->GetIsInList()));
     // 获取定时器的触发时间点 t。
     auto t = p->GetWheelCurIndexTime();
     // 查找 timers_ 中是否已经存在该触发时间点
     auto it = timers_.find(t);
     // 如果不存在，创建一个空的定时器列表。
     if (it == timers_.end()) {
+        // Log("+++++++++++++++++++++++新建一个定时器++++++++++++++++++++++++++++++");
         std::list<TimerPtr> l;
         timers_.insert(std::make_pair(t, l));
         it = timers_.find(t);
+        // std::cout << "insert  时间列表中时间 it 为： "<< TimePointConvertInteger(it->first) << std::endl;
     }
+    // std::cout << "insert timers 长度 为： "<< timers_.size() << std::endl;
+    for (auto it_ : timers_)
+    {
+        /* code */
+        // std::cout << "insert  时间列表中时间  为： "<< TimePointConvertInteger(it_.first) << std::endl;
+    }
+    
     // 将定时器插入到定时器列表中，然后设置相应的标志，表示已经在列表中。
     auto& l = it->second;
     p->SetIt(l.insert(l.end(), p));
+    // std::cout << "insert  list长度  为： "<< l.size() << std::endl;
     p->SetIsInList(true);
+
 }
 
 bool TimerMgr::remove(const TimerPtr& p) {
-    assert(p->GetIsInList());
+    if(!p->GetIsInList())
+        Log("要移除的定时器不存在！");
+    assert(("要移除的定时器不存在！",p->GetIsInList()));
     // 获取定时器的触发时间点 t。
     auto t = p->GetWheelCurIndexTime();
     // 查找 timers_ 中是否存在该触发时间点，以及是否存在定时器列表。
+    // std::cout << "remove timers 长度++++为： "<< timers_.size() << std::endl;
     auto it = timers_.find(t);
     if (it == timers_.end()) {
-        assert(false);
+        // Log("timers_中不存在触发时间点");
+        assert(("timers_中不存在触发时间点",false));
         return false;
     }
 
     auto& l = it->second;
     if (p->GetIt() == l.end()) {
-        assert(false);
+        // Log("定时器列表为空");
+        assert(("定时器列表为空",false));
         return false;
     }
     // 从定时器列表中移除定时器，并更新相应的标志
     l.erase(p->GetIt());
+    // std::cout << "remove l 长度++++为： "<< l.size() << std::endl;
     p->SetIt(l.end());
     p->SetIsInList(false);
+    // Log("移除完毕");
     return true;
+
 }
 
 bool TimerMgr::compareMaxSetTime(const TimerPtr& p){

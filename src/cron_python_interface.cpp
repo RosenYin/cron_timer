@@ -1,7 +1,7 @@
 // #include <Python.h>
 #include <stdio.h>
 #include "cron_timer.h"
-
+#include "cron_log.h"
 using namespace cron_timer;
 
 typedef void (*func_t) (void);
@@ -17,9 +17,9 @@ extern "C" {
  * @param func 
  * @param count 
  */
-void AddTimerTask(const char* timer_string, func_t func, int count){
+void AddTimerTask(const char* timer_string, func_t func, int id, int count){
     std::string timerStr(timer_string);
-    mgr.AddTimer(timerStr, std::move(func), count);
+    mgr.AddTimer(timerStr, std::move(func), id, count);
 }
 /**
  * @brief 时间轮索引更新
@@ -36,4 +36,15 @@ void StopAll(){
     mgr.Stop();
 }
 
+void Log_(const char* timer_string){
+    std::string timerStr(timer_string);
+    Log(timer_string);
+}
+/**
+ * @brief 停止所有任务
+ * 
+ */
+void StopAppointed(int id){
+    mgr.RemoveAppointedTimer(id);
+}
 } // extern "C"

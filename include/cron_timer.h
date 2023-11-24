@@ -26,9 +26,12 @@ class BaseTimer : public std::enable_shared_from_this<BaseTimer> {
 
 public:
 	explicit BaseTimer(TimerMgr& owner, FUNC_CALLBACK&& func);
+	explicit BaseTimer(TimerMgr& owner, FUNC_CALLBACK&& func, int id);
 	virtual ~BaseTimer();
 	void Cancel();
 	bool compareCurWheelIndexTime();
+	int SetID(int id);
+	int GetID();
 protected:
 	std::list<TimerPtr>::iterator& GetIt();
 	void SetIt(const std::list<TimerPtr>::iterator& it);
@@ -43,6 +46,7 @@ protected:
 	FUNC_CALLBACK func_; //回调函数
 	std::list<TimerPtr>::iterator it_; //计时器在列表中的迭代器
 	bool is_in_list_; //表示计时器是否在列表中的标志位
+	int id_ = -1;
 };
 
 /**
@@ -53,6 +57,7 @@ class CronTimer : public BaseTimer {
 	friend class TimerMgr;
 public:
 	explicit CronTimer(TimerMgr& owner, std::vector<CronWheel>&& wheels, FUNC_CALLBACK&& func, int count);
+	explicit CronTimer(TimerMgr& owner, std::vector<CronWheel>&& wheels, FUNC_CALLBACK&& func, int count, int id);
 	void InitWheelIndex();
 	inline void DoFunc() override;
 	std::chrono::system_clock::time_point GetWheelCurIndexTime() const override;
@@ -71,6 +76,7 @@ class LaterTimer : public BaseTimer {
 	friend class TimerMgr;
 public:
 	explicit LaterTimer(TimerMgr& owner, int milliseconds, FUNC_CALLBACK&& func, int count);
+	explicit LaterTimer(TimerMgr& owner, int milliseconds, FUNC_CALLBACK&& func, int count, int id);
 	inline void DoFunc() override;
 	std::chrono::system_clock::time_point GetWheelCurIndexTime() const override;
 
@@ -100,8 +106,9 @@ public:
 	TimerMgr(const TimerMgr&) = delete;
 	const TimerMgr& operator=(const TimerMgr&) = delete;
 
-	TimerPtr AddTimer(const std::string& timer_string, FUNC_CALLBACK&& func, int count = RUN_FOREVER);
+	TimerPtr AddTimer(const std::string& timer_string, FUNC_CALLBACK&& func, int id, int count = RUN_FOREVER);
 	TimerPtr AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, int count = 1);
+	bool RemoveAppointedTimer(int id);
 	// 获取最接近的触发时间点
 	std::chrono::system_clock::time_point GetNearestTime();
 	size_t Update();
@@ -120,8 +127,10 @@ public:
 	static std::vector<int> GetNowTimeConvertVetcor();
 private:
 	std::map<std::chrono::system_clock::time_point, std::list<TimerPtr>> timers_;
+	std::map<int, TimerPtr> id_pointer;
 	bool stopped_ = false;
 	std::vector<std::vector<CronWheel>> wheels_gather_;
+	std::vector<int> id_;
 };
 
 }
