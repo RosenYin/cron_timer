@@ -578,6 +578,10 @@ TimerPtr TimerMgr::AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, int cou
 
 bool TimerMgr::RemoveAppointedTimer(int id) {
     auto it = id_pointer.find(id);
+    if (it == id_pointer.end()) {
+        assert(("不存在该ID任务",false));
+        return false;
+    }
     it->second->Cancel();
     return true;
 }

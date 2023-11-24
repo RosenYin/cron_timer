@@ -42,7 +42,7 @@ count = 0
 while True:
     count = count +1
     if(count > 5):
-        lib.StopAppointed(22)
+        lib.StopAppointed(12)
     # print("-------")
     # lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, 22, ctypes.c_int(10))
     time.sleep(1)
