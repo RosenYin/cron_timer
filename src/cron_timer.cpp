@@ -449,7 +449,30 @@ void LaterTimer::Next() {
 TimerMgr::TimerMgr() {}
 // TimerMgr::TimerMgr(const TimerMgr&) = delete;
 // const TimerMgr& TimerMgr::operator=(const TimerMgr&) = delete;
+TimerMgr *TimerMgr::m_TimerMgrPtr = nullptr;
+std::mutex TimerMgr::m_Mutex;
 
+// 注意：不能返回指针的引用，否则存在外部被修改的风险！
+TimerMgr * TimerMgr::GetInstance(){
+    //  这里使用了两个 if 判断语句的技术称为双检锁；好处是，只有判断指针为空的时候才加锁，
+    //  避免每次调用 GetInstance的方法都加锁，锁的开销毕竟还是有点大的。
+    if (m_TimerMgrPtr == nullptr) {
+        std::unique_lock<std::mutex> lock(m_Mutex); // 加锁
+        if (m_TimerMgrPtr == nullptr){
+            volatile auto temp = new (std::nothrow) TimerMgr();
+            m_TimerMgrPtr = temp;
+        }
+    }
+    return m_TimerMgrPtr;
+}
+
+void TimerMgr::DeleteInstance(){
+    std::unique_lock<std::mutex> lock(m_Mutex); // 加锁
+    if (m_TimerMgrPtr){
+        delete m_TimerMgrPtr;
+        m_TimerMgrPtr = nullptr;
+    }
+}
 /**
  * @brief 用于停止所有定时器的执行。
  * 它会清空定时器列表，并将 stopped_ 标记设置为 true，表示停止所有定时器。

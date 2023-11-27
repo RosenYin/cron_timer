@@ -10,6 +10,7 @@
 #include <time.h>
 #include <cstring>
 #include <algorithm>
+#include <mutex>
 
 namespace cron_timer {
 
@@ -102,10 +103,6 @@ public:
 		RUN_FOREVER = -1
 	};
 
-	TimerMgr();
-	TimerMgr(const TimerMgr&) = delete;
-	const TimerMgr& operator=(const TimerMgr&) = delete;
-
 	TimerPtr AddTimer(const std::string& timer_string, FUNC_CALLBACK&& func, int id, int count = RUN_FOREVER);
 	TimerPtr AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, int count = 1);
 	bool RemoveAppointedTimer(int id);
@@ -113,7 +110,15 @@ public:
 	std::chrono::system_clock::time_point GetNearestTime();
 	size_t Update();
 	void Stop();
-	
+public:
+	// 获取单实例对象
+    static TimerMgr *GetInstance();
+    //释放单实例，进程退出时调用
+    static void DeleteInstance();
+private:
+	TimerMgr();
+	TimerMgr(const TimerMgr&) = delete;
+	const TimerMgr& operator=(const TimerMgr&) = delete;
 private:
 	void insert(const TimerPtr& p);
 	bool remove(const TimerPtr& p);
@@ -131,6 +136,10 @@ private:
 	bool stopped_ = false;
 	std::vector<std::vector<CronWheel>> wheels_gather_;
 	std::vector<int> id_;
+private:
+	// 唯一单实例对象指针
+    static TimerMgr *m_TimerMgrPtr;
+    static std::mutex m_Mutex;
 };
 
 }

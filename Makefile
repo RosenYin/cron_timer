@@ -1,5 +1,12 @@
+# 编译成so还是可执行文件
+CUSTOM_COMPILE_OPTIONS = 0
 # 可执行文件的名字
-TARGET = libcron_cpp.so
+ifeq ($(CUSTOM_COMPILE_OPTIONS), 1)
+TARGET = libcron_timer.so
+endif
+ifeq ($(CUSTOM_COMPILE_OPTIONS), 0)
+TARGET = cron_cpp
+endif
 TARGET := $(addprefix ./,$(TARGET))
 # 方便起见一般都会先定义编译器链接器
 CC = g++ 
@@ -19,7 +26,9 @@ C_INCLUDES = \
 -I/usr/include/python3.8
 # 编译标志
 CFLAGS = -std=c++11
+ifeq ($(CUSTOM_COMPILE_OPTIONS), 1)
 CFLAGS += -shared -fPIC
+endif
 # .PHONE伪目标，具体含义百度一下一大堆介绍
 .PHONY:all clean
 

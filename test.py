@@ -6,7 +6,7 @@ import time
 from ctypes import *
 so = ctypes.cdll.LoadLibrary
 # lib = so('./libcron_cpp.so') #刚刚生成的库文件的路径
-lib = so('/home/agilex/VSCode_ws/C_CPP/cron_timer/build/libcron_timer.so') 
+lib = so('./libcron_timer.so') 
 # 使用 ctypes 库时定义 C 函数指针类型的一种方式。这用于告诉 ctypes 我们期望 C 函数指针指向的函数返回类型是 None，即没有返回值。
 # 如果你的 C++ 函数有其他的返回类型，你需要相应地调整 ctypes.CFUNCTYPE 中的参数，以确保类型匹配。
 # 例如，如果 C++ 函数返回 int，则可以使用 ctypes.CFUNCTYPE(ctypes.c_int)。

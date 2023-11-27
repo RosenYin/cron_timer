@@ -3,12 +3,12 @@
 #include <atomic>
 #include <thread>
 #include <cstdarg>
-
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #else
 #include <signal.h>
+#include <unistd.h>
 #endif
 
 #include "cron_timer.h"
@@ -61,10 +61,10 @@ void TestSplitStr() {
 }
 
 void TestCronTimerInMainThread() {
-	cron_timer::TimerMgr mgr;
-
+	// cron_timer::TimerMgr mgr;
+	std::shared_ptr<cron_timer::TimerMgr> mgr = (std::shared_ptr<cron_timer::TimerMgr>)cron_timer::TimerMgr::GetInstance();
 	// 2023年11月的每秒都会触发
-	mgr.AddTimer("* * * ? * 3 2023", [](void) {Log("--------1 second cron timer hit");}, 22);
+	mgr->AddTimer("* * * ? * 1 2023", [](void) {Log("--------1 second cron timer hit");}, 22);
 	// 周一到周日每秒都触发
 	
 	// // 从0秒开始，每3秒钟执行一次
@@ -89,11 +89,13 @@ void TestCronTimerInMainThread() {
 	
 
 	while (!_shutDown) {
-		mgr.AddTimer("* * 18 ? * *", [](void) {Log(">>>>>>>1 second cron timer hit");}, 11);
+		mgr->AddTimer("* * 15 ? * *", [](void) {Log(">>>>>>>1 second cron timer hit");}, 11);
 		// auto nearest_timer =
 		// (std::min)(std::chrono::system_clock::now() + std::chrono::milliseconds(500), mgr.GetNearestTime());
 		// std::this_thread::sleep_until(nearest_timer);
-		mgr.Update();
+		mgr->Update();
+		// std::cout << "call" << std::endl;
+		usleep(500000);
 	}
 }
 
