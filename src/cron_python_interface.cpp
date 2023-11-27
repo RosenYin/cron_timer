@@ -22,6 +22,16 @@ void AddTimerTask(const char* timer_string, func_t func, int id, int count){
     mgr->AddTimer(timerStr, std::move(func), id, count);
 }
 /**
+ * @brief 调用TimerMgr类的增加间隔时间执行的任务接口
+ * 
+ * @param timer_string 
+ * @param func 
+ * @param count 
+ */
+void AddDElayTimerTask(const int milliseconds, func_t func, int id, int count){
+    mgr->AddDelayTimer(milliseconds, std::move(func), id, count);
+}
+/**
  * @brief 时间轮索引更新
  * 
  */
