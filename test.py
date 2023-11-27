@@ -33,7 +33,7 @@ lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback, 33, ctypes.c_int(
 lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, 22, ctypes.c_int(10))
 
 def Thread():
-    print("dafdasf")
+    print("更新线程")
     while True:
         lib.Update()
         time.sleep(0.1)

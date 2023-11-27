@@ -199,15 +199,15 @@ CronTimer::CronTimer(TimerMgr& owner, std::vector<CronWheel>&& wheels, FUNC_CALL
  * 
  */
 void CronTimer::InitWheelIndex(){
-    std::cout << std::endl;
-    std::cout<<"初始化wheel索引....."<<std::endl;
+    // std::cout << std::endl;
+    // std::cout<<"初始化wheel索引....."<<std::endl;
     // 获取当前时间列表
     std::vector<int> cur_time = TimerMgr::GetNowTimeConvertVetcor();
-    std::cout << std::endl;
-    for (std::vector<int>::iterator i = cur_time.begin(); i != cur_time.end(); i++){
-        std::cout<<*i<<std::endl;
-    }
-    std::cout << std::endl;
+    // std::cout << std::endl;
+    // for (std::vector<int>::iterator i = cur_time.begin(); i != cur_time.end(); i++){
+    //     std::cout<<*i<<std::endl;
+    // }
+    // std::cout << std::endl;
     // 创建时间轮标志位，用来判断上一个时间轮是否大于或者小于当前时间
     // 如果为true则应该令之后的时间轮的索引指向为最初(0)
     bool last_wheel_less_all = false;
@@ -268,10 +268,10 @@ void CronTimer::InitWheelIndex(){
             }
         }
     }
-    for (std::vector<CronWheel>::iterator i = wheels_.begin(); i != wheels_.end(); i++){
-        std::cout<<(*i).cur_index << " - "<<(*i).values[(*i).cur_index] << std::endl;
-    }
-    std::cout << std::endl;
+    // for (std::vector<CronWheel>::iterator i = wheels_.begin(); i != wheels_.end(); i++){
+    //     std::cout<<(*i).cur_index << " - "<<(*i).values[(*i).cur_index] << std::endl;
+    // }
+    // std::cout << std::endl;
 }
 
 void CronTimer::DoFunc() {
@@ -513,22 +513,22 @@ TimerPtr TimerMgr::AddTimer(const std::string& timer_string, FUNC_CALLBACK&& fun
         wheels.emplace_back(wheel);//尾插入时间轮列表中
     }
 
-        std::cout<<std::endl;
-		for (std::vector<CronWheel>::iterator it = wheels.begin(); it != wheels.end(); it++)
-		{
-			for (std::vector<int>::iterator it1 = (*it).values.begin(); it1 != (*it).values.end(); it1++)
-			{
-				std::cout << (*it1) << " ";
+        // std::cout<<std::endl;
+		// for (std::vector<CronWheel>::iterator it = wheels.begin(); it != wheels.end(); it++)
+		// {
+		// 	for (std::vector<int>::iterator it1 = (*it).values.begin(); it1 != (*it).values.end(); it1++)
+		// 	{
+		// 		std::cout << (*it1) << " ";
 				
-			}
-			std::cout <<"wheel_type:" <<(*it).GetWheelType()  << "  ";
-			std::cout <<"wheel_max:" <<(*it).max_value  << "  ";
-			std::cout <<"wheel_min:" <<(*it).min_value  << "  ";
-			std::cout <<std::endl<< "---------------------------";
-			std::cout << std::endl;
-		}
-		std::cout << "<<<<<<<<<<<<<<<<<<<<<--------------------------->>>>>>>>>>>>>>>>>>>>>";
-		std::cout << std::endl;
+		// 	}
+		// 	std::cout <<"wheel_type:" <<(*it).GetWheelType()  << "  ";
+		// 	std::cout <<"wheel_max:" <<(*it).max_value  << "  ";
+		// 	std::cout <<"wheel_min:" <<(*it).min_value  << "  ";
+		// 	std::cout <<std::endl<< "---------------------------";
+		// 	std::cout << std::endl;
+		// }
+		// std::cout << "<<<<<<<<<<<<<<<<<<<<<--------------------------->>>>>>>>>>>>>>>>>>>>>";
+		// std::cout << std::endl;
 
     //创建 CronTimer 对象，并将其插入到定时器管理器中，最后返回该定时器对象的指针。
     bool time_reasonable_ = compareMaxSetTime(wheels);
