@@ -57,7 +57,6 @@ protected:
 class CronTimer : public BaseTimer {
 	friend class TimerMgr;
 public:
-	explicit CronTimer(TimerMgr& owner, std::vector<CronWheel>&& wheels, FUNC_CALLBACK&& func, int count);
 	explicit CronTimer(TimerMgr& owner, std::vector<CronWheel>&& wheels, FUNC_CALLBACK&& func, int count, int id);
 	void InitWheelIndex();
 	inline void DoFunc() override;
@@ -76,7 +75,6 @@ private:
 class LaterTimer : public BaseTimer {
 	friend class TimerMgr;
 public:
-	explicit LaterTimer(TimerMgr& owner, int milliseconds, FUNC_CALLBACK&& func, int count);
 	explicit LaterTimer(TimerMgr& owner, int milliseconds, FUNC_CALLBACK&& func, int count, int id);
 	inline void DoFunc() override;
 	std::chrono::system_clock::time_point GetWheelCurIndexTime() const override;
@@ -104,7 +102,7 @@ public:
 	};
 
 	TimerPtr AddTimer(const std::string& timer_string, FUNC_CALLBACK&& func, int id, int count = RUN_FOREVER);
-	TimerPtr AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, int count = 1);
+	TimerPtr AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, int id, int count = 1);
 	bool RemoveAppointedTimer(int id);
 	// 获取最接近的触发时间点
 	std::chrono::system_clock::time_point GetNearestTime();

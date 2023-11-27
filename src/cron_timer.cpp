@@ -183,12 +183,6 @@ void BaseTimer::DoFunc(){};
  * @param func 
  * @param count 
  */
-CronTimer::CronTimer(TimerMgr& owner, std::vector<CronWheel>&& wheels, FUNC_CALLBACK&& func, int count)
-    : BaseTimer(owner, std::move(func))
-    , wheels_(std::move(wheels))
-    , over_flowed_(false)
-    , count_left_(count){}
-
 CronTimer::CronTimer(TimerMgr& owner, std::vector<CronWheel>&& wheels, FUNC_CALLBACK&& func, int count, int id)
     : BaseTimer(owner, std::move(func), id)
     , wheels_(std::move(wheels))
@@ -383,15 +377,6 @@ int CronTimer::GetCurValue(int data_type) const {
  * @brief 继承自 BaseTimer 类,用于在一定延迟之后执行回调函数
  * 
  */
-
-LaterTimer::LaterTimer(TimerMgr& owner, int milliseconds, FUNC_CALLBACK&& func, int count)
-    : BaseTimer(owner, std::move(func))
-    , mill_seconds_(milliseconds)
-    , count_left_(count)
-    , cur_time_(std::chrono::system_clock::now())
-{
-    Next();
-}
 LaterTimer::LaterTimer(TimerMgr& owner, int milliseconds, FUNC_CALLBACK&& func, int count, int id)
     : BaseTimer(owner, std::move(func), id)
     , mill_seconds_(milliseconds)
@@ -405,14 +390,15 @@ LaterTimer::LaterTimer(TimerMgr& owner, int milliseconds, FUNC_CALLBACK&& func, 
  * 
  */
 void LaterTimer::DoFunc() {
-	if(compareCurWheelIndexTime())
-	    func_();
+	
 	// 可能用户在定时器中取消了自己
 	if (GetIsInList()) {
+        if(compareCurWheelIndexTime() && count_left_ != 0)
+	        func_();
 		auto self = shared_from_this();
 		owner_.remove(self);
 
-		if (count_left_ <= TimerMgr::RUN_FOREVER || --count_left_ > 0) {
+		if (count_left_ == TimerMgr::RUN_FOREVER || --count_left_ > 0) {
 			Next();
 			owner_.insert(self);
 		}
@@ -585,18 +571,24 @@ TimerPtr TimerMgr::AddTimer(const std::string& timer_string, FUNC_CALLBACK&& fun
  * @param count 定时器执行次数
  * @return TimerPtr 
  */
-TimerPtr TimerMgr::AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, int count) {
+TimerPtr TimerMgr::AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, int id, int count) {
     if (stopped_) {
         return nullptr;
     }
 
     assert(("设定的时间段需要大于0！！",milliseconds > 0));
     milliseconds = (std::max)(milliseconds, 1); //至少延迟 1 毫秒
+    bool isWheelsDuplicate;
+    std::vector<int>::iterator it = find(id_.begin(), id_.end(), id);
+    if (it == id_.end())    isWheelsDuplicate = false; 
+    else    isWheelsDuplicate = true;
     //创建 LaterTimer 对象，用于延时执行，然后将其插入到定时器管理器中，最后返回该定时器对象的指针。
-    auto p = std::make_shared<LaterTimer>(*this, milliseconds, std::move(func), count);
-    p->Next();
-    insert(p);
-    return p;
+    if(!isWheelsDuplicate){
+        auto p = std::make_shared<LaterTimer>(*this, milliseconds, std::move(func), count, id);
+        id_pointer.insert(std::make_pair(id, p));
+        insert(p);
+        return p;
+    }
 }
 
 bool TimerMgr::RemoveAppointedTimer(int id) {
@@ -682,14 +674,9 @@ void TimerMgr::insert(const TimerPtr& p) {
         std::list<TimerPtr> l;
         timers_.insert(std::make_pair(t, l));
         it = timers_.find(t);
-        // std::cout << "insert  时间列表中时间 it 为： "<< TimePointConvertInteger(it->first) << std::endl;
+        std::cout << "insert  时间列表中时间 it 为： "<< TimePointConvertInteger(it->first) << std::endl;
     }
     // std::cout << "insert timers 长度 为： "<< timers_.size() << std::endl;
-    for (auto it_ : timers_)
-    {
-        /* code */
-        // std::cout << "insert  时间列表中时间  为： "<< TimePointConvertInteger(it_.first) << std::endl;
-    }
     
     // 将定时器插入到定时器列表中，然后设置相应的标志，表示已经在列表中。
     auto& l = it->second;

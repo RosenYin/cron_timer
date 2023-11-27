@@ -77,10 +77,10 @@ void TestCronTimerInMainThread() {
 	// mgr.AddTimer("40-50 * * * * ?", [](void) {Log("cron timer hit between 40s to 50s");});
 
 	// // 每10秒钟执行一次，总共执行3次
-	// mgr.AddDelayTimer(10000,[](void) {Log("10 second delay timer hit");}, 3);
+	mgr->AddDelayTimer(10000,[](void) {Log("10 second delay timer hit");}, 3, -1);
 	// Log("10 second delay timer added");
 	// // 3秒钟之后执行
-	// std::weak_ptr<cron_timer::BaseTimer> timer = mgr.AddDelayTimer(3000, [](void) {Log("3 second delay timer hit");});
+	// std::weak_ptr<cron_timer::BaseTimer> timer = mgr->AddDelayTimer(3000, [](void) {Log("3 second delay timer hit");}, 3);
 	// // 可以在执行之前取消
 	// auto ptr = timer.lock() ;
 	// if (ptr != nullptr) {
@@ -89,13 +89,13 @@ void TestCronTimerInMainThread() {
 	
 
 	while (!_shutDown) {
-		mgr->AddTimer("* * 15 ? * *", [](void) {Log(">>>>>>>1 second cron timer hit");}, 11);
+		// mgr->AddTimer("* * 15 ? * *", [](void) {Log(">>>>>>>1 second cron timer hit");}, 11);
 		// auto nearest_timer =
 		// (std::min)(std::chrono::system_clock::now() + std::chrono::milliseconds(500), mgr.GetNearestTime());
 		// std::this_thread::sleep_until(nearest_timer);
 		mgr->Update();
 		// std::cout << "call" << std::endl;
-		usleep(500000);
+		// usleep(500000);
 	}
 }
 
