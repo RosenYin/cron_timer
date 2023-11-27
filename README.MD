@@ -17,11 +17,11 @@
 | 14     | 增加python接口的调用，使用ctypes，在cmake中可选编译成so或者可执行文件，具体使用可参照test.py | RosenYin已完成   |2023.11.20 |
 | 15     | 增加UTC时间的转换，通过宏定义切换，输入时间和触发时间可以为UTC时间或者当前本地时间 | RosenYin已完成 |2023.11.21 |
 | 16     | 修补当前周横跨两个月份，设定的周的范围小于或大于当前周数值时，月份初始化错误的问题 | RosenYin已完成 |2023.11.21 |
-|       |                                                              |                             |
+| 17     | 修改TimerMgr类为单例模式，使用类内的接口创建该类的唯一指针 |RosenYin已完成 |2023.11.27|
 
 ## 使用
 
-- 实例化`TimerMgr`对象
+- 调用`TimerMgr`对象内GetInstance方法创建唯一指针
 - 调用`TimerMgr`对象中的`AddTimer`方法去处理cron表达式时间并传入回调函数
   - `AddTimer`方法参数：
     - cron表达式(字符串)：
@@ -98,36 +98,54 @@ cmake .. -DCUSTOM_COMPILE_OPTIONS="1"
 #!/usr/bin/env python3
 import ctypes
 import os
+import _thread
+import time
 from ctypes import *
 so = ctypes.cdll.LoadLibrary
-lib = so('./libcron_cpp.so') #刚刚生成的库文件的路径
+lib = so('./libcron_timer.so') #刚刚生成的库文件的路径
 # 使用 ctypes 库时定义 C 函数指针类型的一种方式。这用于告诉 ctypes 我们期望 C 函数指针指向的函数返回类型是 None，即没有返回值。
 # 如果你的 C++ 函数有其他的返回类型，你需要相应地调整 ctypes.CFUNCTYPE 中的参数，以确保类型匹配。
 # 例如，如果 C++ 函数返回 int，则可以使用 ctypes.CFUNCTYPE(ctypes.c_int)。
 func_t = ctypes.CFUNCTYPE(None)
 
 # Define a simple Python function to be called from C++
-def python_callback():
-    print("Python callback function called")
-
+def python_callback1():
+    print("-------------------------Python callback function called1---------------------")
+def python_callback2():
+    print("=========================Python callback function called2=====================")
 # 将Python中的函数 python_callback 转换为C函数指针，以便它可以被传递给C++函数。
 # func_t 是 ctypes.CFUNCTYPE(None) 类型的实例，所以它可以接受没有返回值的函数。
-c_callback = func_t(python_callback)
-
+c_callback1 = func_t(python_callback1)
+c_callback2 = func_t(python_callback2)
 # 设置 AddTimerTask 函数的参数类型和返回类型，以便 ctypes 在调用时能够正确地处理参数和返回值。
 # 这是确保 Python 与 C++ 之间的接口正确匹配的关键步骤。
-lib.AddTimerTask.argtypes = [ctypes.c_char_p, func_t, ctypes.c_int]#指定 AddTimerTask 函数的参数类型。
+lib.AddTimerTask.argtypes = [ctypes.c_char_p, func_t, ctypes.c_int, ctypes.c_int]#指定 AddTimerTask 函数的参数类型。
 lib.AddTimerTask.restype = None#指定 AddTimerTask 函数的返回类型。
 # 定义cron表达式
-cron_expression = b"* * * * * ? 2023"
+cron_expression =   b"* * * ? * * 2023"
+cron_expression1 =  b"* * * ? * * 2023"
+id1 = 33
+id2 = 22
 # 增加定时任务
-lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback, ctypes.c_int(10))
+lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, id1, ctypes.c_int(-1))
+lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback2, id2, ctypes.c_int(10))
+
+def Thread():
+    print("更新线程")
+    while True:
+        lib.Update()
+        time.sleep(0.1)
+# 创建线程
+_thread.start_new_thread(Thread,())
 # 在循环中不断去更新时间轮索引
+count = 0
 while True:
-    # 这里写了增加任务函数，是证明这个函数可以放在循环中，但是注意，如果任务数量过多，有可能影响性能，建议不超过十个任务
-    lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback, ctypes.c_int(10))
-    # 更新
-    lib.Update()
+    count = count +1
+    # 5s后取消指定id的任务
+    if(count > 5):
+        lib.StopAppointed(id2)
+    lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, 22, ctypes.c_int(10))
+    time.sleep(1)
 ```
 
 ## 示例
@@ -144,9 +162,11 @@ while True:
 #include <windows.h>
 #else
 #include <signal.h>
+#include <unistd.h>
 #endif
 
 #include "cron_timer.h"
+#include "cron_log.h"
 
 std::atomic_bool _shutDown;
 
@@ -191,36 +211,25 @@ void signal_hander(int signo) //自定义一个函数处理信号
     return std::string(_time);
 }
 
-void Log(const char* fmt, ...) {
-char buf[4096];
-va_list args;
-va_start(args, fmt);
-vsnprintf(buf, sizeof(buf) - 1, fmt, args);
-va_end(args);
-
-std::string time_now = FormatDateTime(std::chrono::system_clock::now());
-    printf("%s %s\n", time_now.c_str(), buf);
-}
-
 void TestCronTimerInMainThread() {
-    cron_timer::TimerMgr mgr;
+    std::shared_ptr<cron_timer::TimerMgr> mgr = (std::shared_ptr<cron_timer::TimerMgr>)cron_timer::TimerMgr::GetInstance();
     // 2023年11月的每秒都会触发
-    mgr.AddTimer("* * * * 11 ? 2023", [](void) {Log("--------1 second cron timer hit");});
+    mgr->AddTimer("* * * * 11 ? 2023", [](void) {Log("--------1 second cron timer hit");});
     // 周一到周日每秒都触发
-    mgr.AddTimer("* * * ? * MON-SAT", [](void) {Log(">>>>>>>1 second cron timer hit");});
+    mgr->AddTimer("* * * ? * MON-SAT", [](void) {Log(">>>>>>>1 second cron timer hit");});
     // 从0秒开始，每3秒钟执行一次
-    mgr.AddTimer("0/3 * * * * ?", [](void) {Log("3 second cron timer hit");});
+    mgr->AddTimer("0/3 * * * * ?", [](void) {Log("3 second cron timer hit");});
     // 1分钟执行一次（每次都在0秒的时候执行）的定时器
-    mgr.AddTimer("0 * * * * ?", [](void) {Log("1 minute cron timer hit");});
+    mgr->AddTimer("0 * * * * ?", [](void) {Log("1 minute cron timer hit");});
     // 指定时间（15秒、30秒和33秒）点都会执行一次
-    mgr.AddTimer("15,30,33 * * * * ?", [](void) {Log("cron timer hit at 15s or 30s or 33s");});
+    mgr->AddTimer("15,30,33 * * * * ?", [](void) {Log("cron timer hit at 15s or 30s or 33s");});
     // 指定时间段（40到50内的每一秒）执行的定时器
-    mgr.AddTimer("40-50 * * * * ?", [](void) {Log("cron timer hit between 40s to 50s");});
+    mgr->AddTimer("40-50 * * * * ?", [](void) {Log("cron timer hit between 40s to 50s");});
     // 每10秒钟执行一次，总共执行3次
-    mgr.AddDelayTimer(10000,[](void) {Log("10 second delay timer hit");}, 3);
+    mgr->AddDelayTimer(10000,[](void) {Log("10 second delay timer hit");}, 3);
     Log("10 second delay timer added");
     // 3秒钟之后执行
-    std::weak_ptr<cron_timer::BaseTimer> timer = mgr.AddDelayTimer(3000, [](void) {Log("3 second delay timer hit");});
+    std::weak_ptr<cron_timer::BaseTimer> timer = mgr->AddDelayTimer(3000, [](void) {Log("3 second delay timer hit");});
     // 可以在执行之前取消
     auto ptr = timer.lock() ;
     if (ptr != nullptr) {
@@ -230,7 +239,8 @@ void TestCronTimerInMainThread() {
         // auto nearest_timer =
         // (std::min)(std::chrono::system_clock::now() + std::chrono::milliseconds(500), mgr.GetNearestTime());
         // std::this_thread::sleep_until(nearest_timer);
-        mgr.Update();
+        mgr->Update();
+        usleep(500000);//延迟500ms,500/ms*1000/us = 500000us
     }
 }
 
