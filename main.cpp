@@ -62,7 +62,7 @@ void TestSplitStr() {
 
 void TestCronTimerInMainThread() {
 	// cron_timer::TimerMgr mgr;
-	std::shared_ptr<cron_timer::TimerMgr> mgr = (std::shared_ptr<cron_timer::TimerMgr>)cron_timer::TimerMgr::GetInstance();
+	cron_timer::TimerMgr* mgr = cron_timer::TimerMgr::GetInstance();
 	// 2023年11月的每秒都会触发
 	mgr->AddTimer("* * * ? * 1 2023", [](void) {Log("--------1 second cron timer hit");}, 22);
 	// 周一到周日每秒都触发

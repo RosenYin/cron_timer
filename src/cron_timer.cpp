@@ -115,11 +115,6 @@ int64_t GetLatestMDayWithYearMonthWeek(int year, int month, int weekend){
  * 这个类的设计允许与 TimerMgr 类协同工作，用于管理和调度计时器。
  * 
  */
-BaseTimer::BaseTimer(TimerMgr& owner, FUNC_CALLBACK&& func)
-    : owner_(owner)
-    , func_(std::move(func))
-    , is_in_list_(false) {}
-
 BaseTimer::BaseTimer(TimerMgr& owner, FUNC_CALLBACK&& func, int id)
     : owner_(owner)
     , func_(std::move(func))
@@ -435,30 +430,18 @@ void LaterTimer::Next() {
 TimerMgr::TimerMgr() {}
 // TimerMgr::TimerMgr(const TimerMgr&) = delete;
 // const TimerMgr& TimerMgr::operator=(const TimerMgr&) = delete;
-TimerMgr *TimerMgr::m_TimerMgrPtr = nullptr;
-std::mutex TimerMgr::m_Mutex;
 
 // 注意：不能返回指针的引用，否则存在外部被修改的风险！
-TimerMgr * TimerMgr::GetInstance(){
-    //  这里使用了两个 if 判断语句的技术称为双检锁；好处是，只有判断指针为空的时候才加锁，
-    //  避免每次调用 GetInstance的方法都加锁，锁的开销毕竟还是有点大的。
-    if (m_TimerMgrPtr == nullptr) {
-        std::unique_lock<std::mutex> lock(m_Mutex); // 加锁
-        if (m_TimerMgrPtr == nullptr){
-            volatile auto temp = new (std::nothrow) TimerMgr();
-            m_TimerMgrPtr = temp;
-        }
-    }
-    return m_TimerMgrPtr;
+TimerMgr* TimerMgr::GetInstance(){
+    /**
+     * 局部静态特性的方式实现单实例。
+     * 静态局部变量只在当前函数内有效，其他函数无法访问。
+     * 静态局部变量只在第一次被调用的时候初始化，也存储在静态存储区，生命周期从第一次被初始化起至程序结束止。
+     */
+    static TimerMgr mgr_;
+    return &mgr_;
 }
 
-void TimerMgr::DeleteInstance(){
-    std::unique_lock<std::mutex> lock(m_Mutex); // 加锁
-    if (m_TimerMgrPtr){
-        delete m_TimerMgrPtr;
-        m_TimerMgrPtr = nullptr;
-    }
-}
 /**
  * @brief 用于停止所有定时器的执行。
  * 它会清空定时器列表，并将 stopped_ 标记设置为 true，表示停止所有定时器。

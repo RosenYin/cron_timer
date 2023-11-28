@@ -26,7 +26,6 @@ class BaseTimer : public std::enable_shared_from_this<BaseTimer> {
 	friend class TimerMgr;
 
 public:
-	explicit BaseTimer(TimerMgr& owner, FUNC_CALLBACK&& func);
 	explicit BaseTimer(TimerMgr& owner, FUNC_CALLBACK&& func, int id);
 	virtual ~BaseTimer();
 	void Cancel();
@@ -110,7 +109,7 @@ public:
 	void Stop();
 public:
 	// 获取单实例对象
-    static TimerMgr *GetInstance();
+    static TimerMgr* GetInstance();
     //释放单实例，进程退出时调用
     static void DeleteInstance();
 private:
@@ -134,10 +133,7 @@ private:
 	bool stopped_ = false;
 	std::vector<std::vector<CronWheel>> wheels_gather_;
 	std::vector<int> id_;
-private:
-	// 唯一单实例对象指针
-    static TimerMgr *m_TimerMgrPtr;
-    static std::mutex m_Mutex;
+
 };
 
 }//cron_timer
