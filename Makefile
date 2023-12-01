@@ -1,5 +1,5 @@
 # 编译成so还是可执行文件
-CUSTOM_COMPILE_OPTIONS = 0
+CUSTOM_COMPILE_OPTIONS = 1
 # 可执行文件的名字
 ifeq ($(CUSTOM_COMPILE_OPTIONS), 1)
 TARGET = libcron_timer.so

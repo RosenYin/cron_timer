@@ -92,7 +92,24 @@ cmake .. -DCUSTOM_COMPILE_OPTIONS="1"
 
 先编译文件为so，再在python中调用
 
-需要先使用ctypes导入so文件，然后进行函数所需要参数的类型强制转换，再去调用函数，示例如下：
+注意，要运行test.py的话要令so文件与python文件在同一个路径下
+
+需要先使用ctypes导入so文件，然后进行函数所需要参数的类型强制转换，再去调用函数
+
+test.py提供了例子，在其中有两个cron表达式，用来触发定时任务，其中一个任务设定为永久触发，另一个为执行10次，在主线程中循环5s后取消设定的第二个任务
+
+程序存在执行后缀参数，例：
+
+```shell
+python3 ./test.py --cron1 "0 * * ? * * 2023" --cron2 "* * * ? * * 2023"
+python3 ./test.py --cron1 "0 * * ? * * 2023" # 也可以只输入一个参数，第二个参数自动为默认，执行一直会执行两个任务
+```
+
+也可以不使用后缀参数直接执行,那么就会使用程序内的默认cron表达式参数:
+
+```shell
+python3 ./test.py
+```
 
 ```python
 #!/usr/bin/env python3
@@ -101,6 +118,7 @@ import os
 import _thread
 import time
 from ctypes import *
+import argparse
 so = ctypes.cdll.LoadLibrary
 lib = so('./libcron_timer.so') #刚刚生成的库文件的路径
 # 使用 ctypes 库时定义 C 函数指针类型的一种方式。这用于告诉 ctypes 我们期望 C 函数指针指向的函数返回类型是 None，即没有返回值。
@@ -121,14 +139,23 @@ c_callback2 = func_t(python_callback2)
 # 这是确保 Python 与 C++ 之间的接口正确匹配的关键步骤。
 lib.AddTimerTask.argtypes = [ctypes.c_char_p, func_t, ctypes.c_int, ctypes.c_int]#指定 AddTimerTask 函数的参数类型。
 lib.AddTimerTask.restype = None#指定 AddTimerTask 函数的返回类型。
-# 定义cron表达式
-cron_expression =   b"* * * ? * * 2023"
-cron_expression1 =  b"* * * ? * * 2023"
+# 设定ID
 id1 = 33
 id2 = 22
 # 增加定时任务
+parser = argparse.ArgumentParser()
+parser.add_argument('--cron1', default= '0 * * ? * * 2023')     # add_argument()指定程序可以接受的命令行选项
+parser.add_argument('--cron2', default= '* * * ? * * 2023')     # add_argument()指定程序可以接受的命令行选项
+args = parser.parse_args()      # parse_args()从指定的选项中返回一些数据
+print(args)
+# 定义cron表达式
+print(args.cron1)
+print(args.cron2)
+cron_expression =  ((str)(args.cron1)).encode()
+cron_expression1 = ((str)(args.cron2)).encode()
+# 增加定时任务
 lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, id1, ctypes.c_int(-1))
-lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback2, id2, ctypes.c_int(10))
+lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, id2, ctypes.c_int(10))
 
 def Thread():
     print("更新线程")
@@ -144,7 +171,6 @@ while True:
     # 5s后取消指定id的任务
     if(count > 5):
         lib.StopAppointed(id2)
-    lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, 22, ctypes.c_int(10))
     time.sleep(1)
 ```
 

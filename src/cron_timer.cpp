@@ -16,6 +16,7 @@
 #include <thread>
 #include <cstdarg>
 #include "cron_log.h"
+
 namespace cron_timer {
 // 是否启用UTC时间
 #define USE_UTC 0
@@ -23,9 +24,9 @@ namespace cron_timer {
 /**
  * @brief Get the Max M Day From Current Month object
  * 
- * @return int64_t 
+ * @return uint64_t 
  */
-int64_t GetMaxMDayFromCurrentMonth(){
+uint64_t GetMaxMDayFromCurrentMonth(){
 	// 获取当前系统时间
     auto now = std::chrono::system_clock::now();
     // 将当前时间转换为时间结构体
@@ -60,8 +61,8 @@ int64_t GetMaxMDayFromCurrentMonth(){
     #endif
     // 打印最大日期
     // std::cout << "Current month's max date: " << maxDateInfo->tm_mday << std::endl;
-
-    return maxDateInfo->tm_mday;
+    uint64_t m_day = maxDateInfo->tm_mday;
+    return m_day;
 }
 /**
  * @brief Get the Latest M Day With Year Month Week object
@@ -388,8 +389,9 @@ void LaterTimer::DoFunc() {
 	
 	// 可能用户在定时器中取消了自己
 	if (GetIsInList()) {
-        if(compareCurWheelIndexTime() && count_left_ != 0)
+        if(compareCurWheelIndexTime() && count_left_ != 0){
 	        func_();
+        }
 		auto self = shared_from_this();
 		owner_.remove(self);
 
@@ -539,7 +541,7 @@ TimerPtr TimerMgr::AddTimer(const std::string& timer_string, FUNC_CALLBACK&& fun
             auto p = std::make_shared<CronTimer>(*this, std::move(wheels), std::move(func), count, id);
             id_pointer.insert(std::make_pair(id, p));
             p->InitWheelIndex();
-            p->Next(CronExpression::DT_SECOND);
+            // p->Next(CronExpression::DT_SECOND);
             insert(p);
             return p;
         }
@@ -571,7 +573,7 @@ TimerPtr TimerMgr::AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, int id,
         id_pointer.insert(std::make_pair(id, p));
         insert(p);
         return p;
-    }
+    }else return nullptr;
 }
 
 bool TimerMgr::RemoveAppointedTimer(int id) {
@@ -602,7 +604,7 @@ size_t TimerMgr::Update() {
     size_t count = 0;
     // std::cout << "update timers 长度-----为： "<< timers_.size() << std::endl;
     // std::cout << "update list 长度-----为： "<< timers_.begin()->second.size() << std::endl;
-    auto it_ = timers_.begin();
+    // auto it_ = timers_.begin();
     
     // std::cout << "时间列表中时间为： "<< TimePointConvertInteger(it_->first) << std::endl;
     for (auto it = timers_.begin(); it != timers_.end();) {
@@ -657,7 +659,7 @@ void TimerMgr::insert(const TimerPtr& p) {
         std::list<TimerPtr> l;
         timers_.insert(std::make_pair(t, l));
         it = timers_.find(t);
-        std::cout << "insert  时间列表中时间 it 为： "<< TimePointConvertInteger(it->first) << std::endl;
+        // std::cout << "insert  时间列表中时间 it 为： "<< TimePointConvertInteger(it->first) << std::endl;
     }
     // std::cout << "insert timers 长度 为： "<< timers_.size() << std::endl;
     
