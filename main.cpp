@@ -64,20 +64,24 @@ void TestCronTimerInMainThread() {
 	// cron_timer::TimerMgr mgr;
 	cron_timer::TimerMgr* mgr = cron_timer::TimerMgr::GetInstance();
 	// 2023年11月的每秒都会触发
-	mgr->AddTimer("* * * ? 12 * 2023", [](void) {Log("--------1 second cron timer hit");}, 22);
-	// 周一到周日每秒都触发
-	
-	// // 从0秒开始，每3秒钟执行一次
-	// mgr.AddTimer("0/3 * * * * ?", [](void) {Log("3 second cron timer hit");});
-	// // 1分钟执行一次（每次都在0秒的时候执行）的定时器
-	// mgr.AddTimer("0 * * * * ?", [](void) {Log("1 minute cron timer hit");});
-	// // 指定时间（15秒、30秒和33秒）点都会执行一次
-	// mgr.AddTimer("15,30,33 * * * * ?", [](void) {Log("cron timer hit at 15s or 30s or 33s");});
-	// // 指定时间段（40到50内的每一秒）执行的定时器
-	// mgr.AddTimer("40-50 * * * * ?", [](void) {Log("cron timer hit between 40s to 50s");});
+	std::string id = "0";
+    // 2023年11月的每秒都会触发
+    mgr->AddTimer("* * * * 11 ? 2023", [](void) {Log("--------1 second cron timer hit");}, id);//最后一个参数是执行次数，默认为-1,即永远执行,0为永远不执行
+    // 周一到周日每秒都触发
+    mgr->AddTimer("* * * ? * MON-SAT", [](void) {Log(">>>>>>>1 second cron timer hit");}, id+'1');
+    // 从0秒开始，每3秒钟执行一次
+    mgr->AddTimer("0/3 * * * * ?", [](void) {Log("3 second cron timer hit");}, id+'2');
+    // 1分钟执行一次（每次都在0秒的时候执行）的定时器
+    mgr->AddTimer("0 * * * * ?", [](void) {Log("1 minute cron timer hit");}, id+'3');
+    // 指定时间（15秒、30秒和33秒）点都会执行一次
+    mgr->AddTimer("15,30,33 * * * * ?", [](void) {Log("cron timer hit at 15s or 30s or 33s");}, id+'4');
+    // 指定时间段（40到50内的每一秒）执行的定时器
+    mgr->AddTimer("40-50 * * * * ?", [](void) {Log("cron timer hit between 40s to 50s");}, id+'5');
+    // 每10秒钟执行一次，总共执行3次
+    mgr->AddDelayTimer(10000,[](void) {Log("10 second delay timer hit");}, id+'6', -1);//-1是永远执行
 
 	// // 每10秒钟执行一次，总共执行3次
-	mgr->AddDelayTimer(10000,[](void) {Log("10 second delay timer hit");}, 3, -1);
+	mgr->AddDelayTimer(10000,[](void) {Log("10 second delay timer hit");}, "3", -1);
 	// Log("10 second delay timer added");
 	// // 3秒钟之后执行
 	// std::weak_ptr<cron_timer::BaseTimer> timer = mgr->AddDelayTimer(3000, [](void) {Log("3 second delay timer hit");}, 3);

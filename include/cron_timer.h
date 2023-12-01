@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <time.h>
 #include <cstring>
+#include <string>
 #include <algorithm>
 #include <mutex>
 
@@ -26,12 +27,12 @@ class BaseTimer : public std::enable_shared_from_this<BaseTimer> {
 	friend class TimerMgr;
 
 public:
-	explicit BaseTimer(TimerMgr& owner, FUNC_CALLBACK&& func, int id);
+	explicit BaseTimer(TimerMgr& owner, FUNC_CALLBACK&& func, std::string id);
 	virtual ~BaseTimer();
 	void Cancel();
 	bool compareCurWheelIndexTime();
-	int SetID(int id);
-	int GetID();
+	std::string SetID(std::string id);
+	std::string GetID();
 protected:
 	std::list<TimerPtr>::iterator& GetIt();
 	void SetIt(const std::list<TimerPtr>::iterator& it);
@@ -46,7 +47,7 @@ protected:
 	FUNC_CALLBACK func_; //回调函数
 	std::list<TimerPtr>::iterator it_; //计时器在列表中的迭代器
 	bool is_in_list_; //表示计时器是否在列表中的标志位
-	int id_ = -1;
+	std::string id_ = "";
 };
 
 /**
@@ -56,7 +57,7 @@ protected:
 class CronTimer : public BaseTimer {
 	friend class TimerMgr;
 public:
-	explicit CronTimer(TimerMgr& owner, std::vector<CronWheel>&& wheels, FUNC_CALLBACK&& func, int count, int id);
+	explicit CronTimer(TimerMgr& owner, std::vector<CronWheel>&& wheels, FUNC_CALLBACK&& func, int count, std::string id);
 	void InitWheelIndex();
 	inline void DoFunc() override;
 	std::chrono::system_clock::time_point GetWheelCurIndexTime() const override;
@@ -74,7 +75,7 @@ private:
 class LaterTimer : public BaseTimer {
 	friend class TimerMgr;
 public:
-	explicit LaterTimer(TimerMgr& owner, int milliseconds, FUNC_CALLBACK&& func, int count, int id);
+	explicit LaterTimer(TimerMgr& owner, int milliseconds, FUNC_CALLBACK&& func, int count, std::string id);
 	inline void DoFunc() override;
 	std::chrono::system_clock::time_point GetWheelCurIndexTime() const override;
 
@@ -100,9 +101,9 @@ public:
 		RUN_FOREVER = -1
 	};
 
-	TimerPtr AddTimer(const std::string& timer_string, FUNC_CALLBACK&& func, int id, int count = RUN_FOREVER);
-	TimerPtr AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, int id, int count = 1);
-	bool RemoveAppointedTimer(int id);
+	TimerPtr AddTimer(const std::string& timer_string, FUNC_CALLBACK&& func, std::string id, int count = RUN_FOREVER);
+	TimerPtr AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, std::string id, int count = 1);
+	bool RemoveAppointedTimer(std::string id);
 	// 获取最接近的触发时间点
 	std::chrono::system_clock::time_point GetNearestTime();
 	size_t Update();
@@ -129,10 +130,10 @@ public:
 	static std::vector<int> GetNowTimeConvertVetcor();
 private:
 	std::map<std::chrono::system_clock::time_point, std::list<TimerPtr>> timers_;
-	std::map<int, TimerPtr> id_pointer;
+	std::map<std::string, TimerPtr> id_pointer;
 	bool stopped_ = false;
 	std::vector<std::vector<CronWheel>> wheels_gather_;
-	std::vector<int> id_;
+	std::vector<std::string> id_;
 
 };
 

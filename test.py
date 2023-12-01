@@ -5,6 +5,8 @@ import _thread
 import time
 from datetime import datetime
 from ctypes import *
+import binascii
+
 so = ctypes.cdll.LoadLibrary
 lib = so('./libcron_timer.so') #刚刚生成的库文件的路径
 # 使用 ctypes 库时定义 C 函数指针类型的一种方式。这用于告诉 ctypes 我们期望 C 函数指针指向的函数返回类型是 None，即没有返回值。
@@ -31,11 +33,11 @@ c_callback1 = func_t(python_callback1)
 c_callback2 = func_t(python_callback2)
 # 设置 AddTimerTask 函数的参数类型和返回类型，以便 ctypes 在调用时能够正确地处理参数和返回值。
 # 这是确保 Python 与 C++ 之间的接口正确匹配的关键步骤。
-lib.AddTimerTask.argtypes = [ctypes.c_char_p, func_t, ctypes.c_int, ctypes.c_int]#指定 AddTimerTask 函数的参数类型。
+lib.AddTimerTask.argtypes = [ctypes.c_char_p, func_t, ctypes.c_char_p, ctypes.c_int]#指定 AddTimerTask 函数的参数类型。
 lib.AddTimerTask.restype = None#指定 AddTimerTask 函数的返回类型。
 
-id1 = 33
-id2 = 22
+id1 = '33'
+id2 = '22'
 # 增加定时任务
 import argparse
 parser = argparse.ArgumentParser()
@@ -51,8 +53,8 @@ print(args.cron1)
 print(args.cron2)
 cron_expression =  ((str)(args.cron1)).encode()
 cron_expression1 = ((str)(args.cron2)).encode()
-lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, id1, ctypes.c_int(-1))
-lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, id2, ctypes.c_int(-1))
+lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1.encode()), ctypes.c_int(-1))
+lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2.encode()), ctypes.c_int(-1))
 
 def Thread():
     print("更新线程")
@@ -64,9 +66,9 @@ _thread.start_new_thread(Thread,())
 # 在循环中不断去更新时间轮索引
 count = 0
 while True:
-    # count = count +1
-    # # 5s后取消指定id的任务
-    # if(count > 5):
-    #     lib.StopAppointed(id2)
-    # lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, 22, ctypes.c_int(10))
+    count = count +1
+    # 5s后取消指定id的任务
+    if(count > 5):
+        lib.StopAppointed(id2)
+    lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id2.encode()), ctypes.c_int(10))
     time.sleep(1)

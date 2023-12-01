@@ -140,8 +140,8 @@ c_callback2 = func_t(python_callback2)
 lib.AddTimerTask.argtypes = [ctypes.c_char_p, func_t, ctypes.c_int, ctypes.c_int]#指定 AddTimerTask 函数的参数类型。
 lib.AddTimerTask.restype = None#指定 AddTimerTask 函数的返回类型。
 # 设定ID
-id1 = 33
-id2 = 22
+id1 = '33'
+id2 = '22'
 # 增加定时任务
 parser = argparse.ArgumentParser()
 parser.add_argument('--cron1', default= '0 * * ? * * 2023')     # add_argument()指定程序可以接受的命令行选项
@@ -154,8 +154,8 @@ print(args.cron2)
 cron_expression =  ((str)(args.cron1)).encode()
 cron_expression1 = ((str)(args.cron2)).encode()
 # 增加定时任务
-lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, id1, ctypes.c_int(-1))
-lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, id2, ctypes.c_int(10))
+lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1.encode()), ctypes.c_int(-1))
+lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2.encode()), ctypes.c_int(-1))
 
 def Thread():
     print("更新线程")
@@ -239,24 +239,24 @@ void signal_hander(int signo) //自定义一个函数处理信号
 
 void TestCronTimerInMainThread() {
     std::shared_ptr<cron_timer::TimerMgr> mgr = (std::shared_ptr<cron_timer::TimerMgr>)cron_timer::TimerMgr::GetInstance();
-    int id = 0;
+    std::string id = "0";
     // 2023年11月的每秒都会触发
     mgr->AddTimer("* * * * 11 ? 2023", [](void) {Log("--------1 second cron timer hit");}, id);//最后一个参数是执行次数，默认为-1,即永远执行,0为永远不执行
     // 周一到周日每秒都触发
-    mgr->AddTimer("* * * ? * MON-SAT", [](void) {Log(">>>>>>>1 second cron timer hit");}, id+1);
+    mgr->AddTimer("* * * ? * MON-SAT", [](void) {Log(">>>>>>>1 second cron timer hit");}, id+'1');
     // 从0秒开始，每3秒钟执行一次
-    mgr->AddTimer("0/3 * * * * ?", [](void) {Log("3 second cron timer hit");}, id+2);
+    mgr->AddTimer("0/3 * * * * ?", [](void) {Log("3 second cron timer hit");}, id+'2');
     // 1分钟执行一次（每次都在0秒的时候执行）的定时器
-    mgr->AddTimer("0 * * * * ?", [](void) {Log("1 minute cron timer hit");}, id+3);
+    mgr->AddTimer("0 * * * * ?", [](void) {Log("1 minute cron timer hit");}, id+'3');
     // 指定时间（15秒、30秒和33秒）点都会执行一次
-    mgr->AddTimer("15,30,33 * * * * ?", [](void) {Log("cron timer hit at 15s or 30s or 33s");}, id+4);
+    mgr->AddTimer("15,30,33 * * * * ?", [](void) {Log("cron timer hit at 15s or 30s or 33s");}, id+'4');
     // 指定时间段（40到50内的每一秒）执行的定时器
-    mgr->AddTimer("40-50 * * * * ?", [](void) {Log("cron timer hit between 40s to 50s");}, id+5);
+    mgr->AddTimer("40-50 * * * * ?", [](void) {Log("cron timer hit between 40s to 50s");}, id+'5');
     // 每10秒钟执行一次，总共执行3次
-    mgr->AddDelayTimer(10000,[](void) {Log("10 second delay timer hit");}, id+6, -1);//-1是永远执行
+    mgr->AddDelayTimer(10000,[](void) {Log("10 second delay timer hit");}, id+'6', -1);//-1是永远执行
     Log("10 second delay timer added");
     // 3秒钟之后执行
-    std::weak_ptr<cron_timer::BaseTimer> timer = mgr->AddDelayTimer(3000, [](void) {Log("3 second delay timer hit");}, id+7, -1);
+    std::weak_ptr<cron_timer::BaseTimer> timer = mgr->AddDelayTimer(3000, [](void) {Log("3 second delay timer hit");}, id+'7', -1);
     // 可以在执行之前取消
     auto ptr = timer.lock() ;
     if (ptr != nullptr) {

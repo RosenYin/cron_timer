@@ -116,7 +116,7 @@ int64_t GetLatestMDayWithYearMonthWeek(int year, int month, int weekend){
  * 这个类的设计允许与 TimerMgr 类协同工作，用于管理和调度计时器。
  * 
  */
-BaseTimer::BaseTimer(TimerMgr& owner, FUNC_CALLBACK&& func, int id)
+BaseTimer::BaseTimer(TimerMgr& owner, FUNC_CALLBACK&& func, std::string id)
     : owner_(owner)
     , func_(std::move(func))
     , is_in_list_(false) 
@@ -150,12 +150,12 @@ bool BaseTimer::compareCurWheelIndexTime(){
     else return false;
 }
 
-int BaseTimer::SetID(int id){
+std::string BaseTimer::SetID(std::string id){
     id_ = id;
     return id_;
 }
 
-int BaseTimer::GetID(){
+std::string BaseTimer::GetID(){
     return id_;
 }
 //返回计时器在列表中的迭代器引用。
@@ -179,7 +179,7 @@ void BaseTimer::DoFunc(){};
  * @param func 
  * @param count 
  */
-CronTimer::CronTimer(TimerMgr& owner, std::vector<CronWheel>&& wheels, FUNC_CALLBACK&& func, int count, int id)
+CronTimer::CronTimer(TimerMgr& owner, std::vector<CronWheel>&& wheels, FUNC_CALLBACK&& func, int count, std::string id)
     : BaseTimer(owner, std::move(func), id)
     , wheels_(std::move(wheels))
     , over_flowed_(false)
@@ -373,7 +373,7 @@ int CronTimer::GetCurValue(int data_type) const {
  * @brief 继承自 BaseTimer 类,用于在一定延迟之后执行回调函数
  * 
  */
-LaterTimer::LaterTimer(TimerMgr& owner, int milliseconds, FUNC_CALLBACK&& func, int count, int id)
+LaterTimer::LaterTimer(TimerMgr& owner, int milliseconds, FUNC_CALLBACK&& func, int count, std::string id)
     : BaseTimer(owner, std::move(func), id)
     , mill_seconds_(milliseconds)
     , count_left_(count)
@@ -463,7 +463,7 @@ void TimerMgr::Stop() {
  * @param count 定时器执行次数
  * @return TimerPtr 
  */
-TimerPtr TimerMgr::AddTimer(const std::string& timer_string, FUNC_CALLBACK&& func, int id, int count) {
+TimerPtr TimerMgr::AddTimer(const std::string& timer_string, FUNC_CALLBACK&& func, std::string id, int count) {
     if (stopped_)
         return nullptr;
     // 分割字串然后存在容器v中，并检查长度是否是6或者7
@@ -529,7 +529,7 @@ TimerPtr TimerMgr::AddTimer(const std::string& timer_string, FUNC_CALLBACK&& fun
     if(time_reasonable_)
     {
         bool isWheelsDuplicate;
-        std::vector<int>::iterator it = find(id_.begin(), id_.end(), id);
+        std::vector<std::string>::iterator it = find(id_.begin(), id_.end(), id);
         if (it == id_.end()) {
            isWheelsDuplicate = false; 
         }else {
@@ -556,7 +556,7 @@ TimerPtr TimerMgr::AddTimer(const std::string& timer_string, FUNC_CALLBACK&& fun
  * @param count 定时器执行次数
  * @return TimerPtr 
  */
-TimerPtr TimerMgr::AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, int id, int count) {
+TimerPtr TimerMgr::AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, std::string id, int count) {
     if (stopped_) {
         return nullptr;
     }
@@ -564,7 +564,7 @@ TimerPtr TimerMgr::AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, int id,
     assert(("设定的时间段需要大于0！！",milliseconds > 0));
     milliseconds = (std::max)(milliseconds, 1); //至少延迟 1 毫秒
     bool isWheelsDuplicate;
-    std::vector<int>::iterator it = find(id_.begin(), id_.end(), id);
+    std::vector<std::string>::iterator it = find(id_.begin(), id_.end(), id);
     if (it == id_.end())    isWheelsDuplicate = false; 
     else    isWheelsDuplicate = true;
     //创建 LaterTimer 对象，用于延时执行，然后将其插入到定时器管理器中，最后返回该定时器对象的指针。
@@ -576,7 +576,7 @@ TimerPtr TimerMgr::AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, int id,
     }else return nullptr;
 }
 
-bool TimerMgr::RemoveAppointedTimer(int id) {
+bool TimerMgr::RemoveAppointedTimer(std::string id) {
     auto it = id_pointer.find(id);
     if (it == id_pointer.end()) {
         assert(("不存在该ID任务",false));

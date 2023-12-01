@@ -17,9 +17,10 @@ extern "C" {
  * @param func 
  * @param count 
  */
-void AddTimerTask(const char* timer_string, func_t func, int id, int count){
+void AddTimerTask(const char* timer_string, func_t func, const char* id, int count){
     std::string timerStr(timer_string);
-    mgr->AddTimer(timerStr, std::move(func), id, count);
+    std::string idStr(id);
+    mgr->AddTimer(timerStr, std::move(func), idStr, count);
 }
 /**
  * @brief 调用TimerMgr类的增加间隔时间执行的任务接口
@@ -28,8 +29,9 @@ void AddTimerTask(const char* timer_string, func_t func, int id, int count){
  * @param func 
  * @param count 
  */
-void AddDElayTimerTask(const int milliseconds, func_t func, int id, int count){
-    mgr->AddDelayTimer(milliseconds, std::move(func), id, count);
+void AddDElayTimerTask(const int milliseconds, func_t func, const char* id, int count){
+    std::string idStr(id);
+    mgr->AddDelayTimer(milliseconds, std::move(func), idStr, count);
 }
 /**
  * @brief 时间轮索引更新
@@ -54,7 +56,8 @@ void Log_(const char* timer_string){
  * @brief 停止所有任务
  * 
  */
-void StopAppointed(int id){
-    mgr->RemoveAppointedTimer(id);
+void StopAppointed(const char* id){
+    std::string idStr(id);
+    mgr->RemoveAppointedTimer(idStr);
 }
 } // extern "C"
