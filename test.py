@@ -34,7 +34,7 @@ c_callback2 = func_t(python_callback2)
 # 设置 AddTimerTask 函数的参数类型和返回类型，以便 ctypes 在调用时能够正确地处理参数和返回值。
 # 这是确保 Python 与 C++ 之间的接口正确匹配的关键步骤。
 lib.AddTimerTask.argtypes = [ctypes.c_char_p, func_t, ctypes.c_char_p, ctypes.c_int]#指定 AddTimerTask 函数的参数类型。
-lib.AddTimerTask.restype = None#指定 AddTimerTask 函数的返回类型。
+lib.AddTimerTask.restype = bool#指定 AddTimerTask 函数的返回类型。
 # 设置返回类型为 c_char_p
 lib.GetAppointedIDLatestTimeStr.restype = ctypes.c_char_p
 lib.GetCurrentTimeStr.restype = ctypes.c_char_p
@@ -56,8 +56,8 @@ print(args.cron1)
 print(args.cron2)
 cron_expression =  ((str)(args.cron1)).encode()
 cron_expression1 = ((str)(args.cron2)).encode()
-lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1), ctypes.c_int(-1))
-lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2), ctypes.c_int(-1))
+print(lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1), ctypes.c_int(-1)))
+print(lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id1), ctypes.c_int(-1)))
 
 def Thread():
     print("更新线程")

@@ -17,10 +17,13 @@ extern "C" {
  * @param func 
  * @param count 
  */
-void AddTimerTask(const char* timer_string, func_t func, const char* id, int count){
+bool AddTimerTask(const char* timer_string, func_t func, const char* id, int count){
     std::string timerStr(timer_string);
     std::string idStr(id);
-    mgr->AddTimer(timerStr, std::move(func), idStr, count);
+    auto p = mgr->AddTimer(timerStr, std::move(func), idStr, count);
+    if(p != nullptr)
+        return true;
+    return false;
 }
 /**
  * @brief 调用TimerMgr类的增加间隔时间执行的任务接口
