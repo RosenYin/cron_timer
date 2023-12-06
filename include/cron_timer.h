@@ -21,6 +21,11 @@ class TimerMgr;
 using FUNC_CALLBACK = std::function<void()>;
 using TimerPtr = std::shared_ptr<BaseTimer>;
 
+tm TimePointConvertTm(std::chrono::system_clock::time_point time_point_);
+time_t TmConvertTime_t(tm& tm_time_);
+std::string GetTimeStr(std::chrono::system_clock::time_point time_point_);
+uint64_t GetMaxMDayFromCurrentMonth();
+int64_t GetLatestMDayWithYearMonthWeek(int year, int month, int weekend);
 
 class BaseTimer : public std::enable_shared_from_this<BaseTimer> {
 	// 声明 TimerMgr 类为友元类，允许 TimerMgr 类访问 BaseTimer 类的私有成员。
@@ -108,6 +113,11 @@ public:
 	std::chrono::system_clock::time_point GetNearestTime();
 	size_t Update();
 	void Stop();
+
+	std::string GetAppointedIDLatestTimeStr(std::string id_);
+	int GetAppointedIDRemainingTime(std::string id_);
+	std::string GetAllIDList();
+	bool JudgeIDIsExist(std::string id_);
 public:
 	// 获取单实例对象
     static TimerMgr* GetInstance();
@@ -134,6 +144,7 @@ private:
 	bool stopped_ = false;
 	std::vector<std::vector<CronWheel>> wheels_gather_;
 	std::vector<std::string> id_;
+
 
 };
 

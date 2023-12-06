@@ -15,54 +15,62 @@
 #include <atomic>
 #include <thread>
 #include <cstdarg>
+#include <cmath>
 #include "cron_log.h"
 
 namespace cron_timer {
 // 是否启用UTC时间
 #define USE_UTC 0
 
+tm TimePointConvertTm(std::chrono::system_clock::time_point time_point_){
+    tm tm_time = {};
+    // 将时间点转换为 time_t
+	std::time_t time_ = std::chrono::system_clock::to_time_t(time_point_);
+    // std::cout << time_ << std::endl;
+#if USE_UTC==0
+    #ifdef _WIN32
+        localtime_s(&tm_time, &time_); // 获取当前本地时间，存在time_now中
+    #else
+        localtime_r(&time_, &tm_time); // 获取当前本地时间，存在local_tm中
+    #endif // _WIN32
+#endif
+#if USE_UTC==1
+	gmtime_r(&time_, &tm_time);
+#endif
+    return tm_time;
+}
+
+time_t TmConvertTime_t(tm& tm_time_){
+    #if USE_UTC == 1
+        time_t time_t_ = timegm(&tm_time_);
+    #else
+        time_t time_t_ = mktime(&tm_time_);
+    #endif
+    return time_t_;
+}
+
+std::string GetTimeStr(std::chrono::system_clock::time_point time_point_){
+    tm local_tm = TimePointConvertTm(time_point_);
+    std::string s(30, '\0');
+    std::strftime(&s[0], s.size(), "%Y-%m-%d %H:%M:%S", &local_tm);
+    return s;
+}
 /**
  * @brief Get the Max M Day From Current Month object
  * 
  * @return uint64_t 
  */
 uint64_t GetMaxMDayFromCurrentMonth(){
-	// 获取当前系统时间
-    auto now = std::chrono::system_clock::now();
-    // 将当前时间转换为时间结构体
-    std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
-    std::tm timeInfo;
-    #if USE_UTC==0
-    #ifdef _WIN32
-        localtime_s(&timeInfo, &currentTime); 
-    #else
-        localtime_r(&currentTime, &timeInfo); // 获取当前本地时间，存在currentTime中
-    #endif // _WIN32
-    #else
-    gmtime_r(&currentTime, &timeInfo);//将currentTime转化为tm
-    #endif
+    std::tm timeInfo = TimePointConvertTm(std::chrono::system_clock::now());
     // 获取当前月份的最大日期
     // 注意：当前月份的最大日期不同于当前月份的天数，因为某些月份的最后几天可能不是完整的一周
     timeInfo.tm_mday = 1; // 设置为月初
     timeInfo.tm_mon++;    // 切换到下个月
     timeInfo.tm_mday = 0; // 设置为前一天，即当前月份的最后一天
-    #if USE_UTC==0
-    // 将时间结构体转换回时间点
-    auto maxDate = std::chrono::system_clock::from_time_t(std::mktime(&timeInfo));
-    // 将时间点转换为日期
-    auto maxDateInTimeT = std::chrono::system_clock::to_time_t(maxDate);
-    const std::tm* maxDateInfo = std::localtime(&maxDateInTimeT);
-    #else
-    // 将时间结构体转换回时间点
-    auto maxDate = std::chrono::system_clock::from_time_t(std::timegm(&timeInfo));
-    // 将时间点转换为日期
-    auto maxDateInTimeT = std::chrono::system_clock::to_time_t(maxDate);
-    const std::tm* maxDateInfo = std::localtime(&maxDateInTimeT);
-    #endif
-    // 打印最大日期
-    // std::cout << "Current month's max date: " << maxDateInfo->tm_mday << std::endl;
-    uint64_t m_day = maxDateInfo->tm_mday;
-    return m_day;
+    time_t convert_time = TmConvertTime_t(timeInfo);
+    auto maxDate = std::chrono::system_clock::from_time_t(convert_time);
+    const std::tm maxDate_ = TimePointConvertTm(maxDate);
+    return maxDate_.tm_mday;
 }
 /**
  * @brief Get the Latest M Day With Year Month Week object
@@ -76,18 +84,7 @@ uint64_t GetMaxMDayFromCurrentMonth(){
  * @return int64_t 
  */
 int64_t GetLatestMDayWithYearMonthWeek(int year, int month, int weekend){
-	auto cur_time_ = std::chrono::system_clock::now();//获取当前chrono时间
-	time_t time_now = std::chrono::system_clock::to_time_t(cur_time_);//转换chrono时间为time_t
-	struct tm cur_utc_time;//创建当前utc时间结构体，用来存放转化成utc的时间
-    #if USE_UTC==0
-    #ifdef _WIN32
-        localtime_s(&cur_utc_time, &time_now); 
-    #else
-        localtime_r(&time_now, &cur_utc_time); // 获取当前本地时间，存在cur_utc_time中
-    #endif // _WIN32
-    #else
-    gmtime_r(&time_now, &cur_utc_time);//将time_now转化为tm
-    #endif
+	struct tm cur_utc_time = TimePointConvertTm(std::chrono::system_clock::now());//创建当前utc时间结构体，用来存放转化成utc的时间
 	tm cur_time;
 	memset(&cur_time, 0, sizeof(cur_time));
 	cur_time.tm_year = year - 1900;
@@ -317,11 +314,7 @@ std::chrono::system_clock::time_point CronTimer::GetWheelCurIndexTime() const{
 		// std::cout << "wheel时间 时 为：  " << next_tm.tm_hour << std::endl;
 		// std::cout << "wheel时间 分 为：  " << next_tm.tm_min << std::endl;
 		// std::cout << "wheel时间 秒 为：  " << next_tm.tm_sec << std::endl;
-    #if USE_UTC == 1
-        time_t wheel_time_t = timegm(&next_tm);
-    #else
-        time_t wheel_time_t = mktime(&next_tm);
-    #endif
+    time_t wheel_time_t = TmConvertTime_t(next_tm);
         // std::cout << "wheel时间为：  " << next_tm.tm_year + 1900 << std::endl;
 		// std::cout << "wheel时间为：  " << next_tm.tm_wday << std::endl;
 		// std::cout << "wheel时间为：  " << next_tm.tm_mon+1  << std::endl;
@@ -444,6 +437,7 @@ TimerMgr* TimerMgr::GetInstance(){
     return &mgr_;
 }
 
+
 /**
  * @brief 用于停止所有定时器的执行。
  * 它会清空定时器列表，并将 stopped_ 标记设置为 true，表示停止所有定时器。
@@ -455,6 +449,44 @@ void TimerMgr::Stop() {
     stopped_ = true;
 }
 
+std::string TimerMgr::GetAppointedIDLatestTimeStr(std::string id_){
+    auto it = id_pointer.find(id_);
+    if (it == id_pointer.end()) {
+        assert(("不存在该ID任务",false));
+        return nullptr;
+    }
+    auto latest_time = it->second->GetWheelCurIndexTime();
+    return GetTimeStr(latest_time);
+}
+
+int TimerMgr::GetAppointedIDRemainingTime(std::string id_){
+    auto it = id_pointer.find(id_);
+    if (it == id_pointer.end()) {
+        assert(("不存在该ID任务",false));
+        return -1;
+    }
+    auto latest_time = it->second->GetWheelCurIndexTime();
+    std::chrono::duration<double> diff = latest_time - std::chrono::system_clock::now();
+    return round(diff.count());
+}
+
+std::string TimerMgr::GetAllIDList(){
+    std::string id_list;
+    for (auto i : id_)
+    {
+        /* code */
+        id_list = i + "," + id_list;
+    }
+    return id_list;
+}
+
+bool TimerMgr::JudgeIDIsExist(std::string id_){
+    auto it = id_pointer.find(id_);
+    if (it == id_pointer.end()) {
+        return false;
+    }
+    return true;
+}
 /**
  * @brief 添加一个新的 Cron 表达式定时器,缺省永远执行
  * 
@@ -583,6 +615,8 @@ bool TimerMgr::RemoveAppointedTimer(std::string id) {
         return false;
     }
     it->second->Cancel();
+    std::vector<std::string>::iterator it_ = find(id_.begin(), id_.end(), id);
+    id_.erase(it_);
     return true;
 }
 
@@ -741,11 +775,8 @@ std::chrono::system_clock::time_point TimerMgr::GetWheelsMaxTimePoint(std::vecto
 		next_tm.tm_wday = wheels[CronExpression::DATA_TYPE::DT_WEEK].max_value;
     next_tm.tm_mon = wheels[CronExpression::DATA_TYPE::DT_MONTH].max_value - 1;
     next_tm.tm_year = wheels[CronExpression::DATA_TYPE::DT_YEAR].max_value - 1900;
-    #if USE_UTC == 1
-        time_t wheel_time_t = timegm(&next_tm);
-    #else
-        time_t wheel_time_t = mktime(&next_tm);
-    #endif
+    time_t wheel_time_t = TmConvertTime_t(next_tm);
+
         // std::cout << "wheel最大时间为：  " << next_tm.tm_year + 1900 << std::endl;
 		// std::cout << "wheel最大时间为：  " << next_tm.tm_wday << std::endl;
 		// std::cout << "wheel最大时间为：  " << next_tm.tm_mon + 1 << std::endl;
@@ -802,24 +833,7 @@ int64_t TimerMgr::GetNowTimeSecond(){
  * @return std::vector<int> 
  */
 std::vector<int> TimerMgr::GetNowTimeConvertVetcor(){
-    tm local_tm;
-#if USE_UTC==0
-        time_t time_now = time(nullptr);
-    #ifdef _WIN32
-        localtime_s(&local_tm, &time_now); // 获取当前本地时间，存在time_now中
-    #else
-        localtime_r(&time_now, &local_tm); // 获取当前本地时间，存在local_tm中
-    #endif // _WIN32
-#endif
-#if USE_UTC==1
-    // 获取当前时间点
-    auto currentTimePoint = std::chrono::system_clock::now();
-    // 将时间点转换为 time_t
-    std::time_t time_ = std::chrono::system_clock::to_time_t(currentTimePoint);
-    auto cur_time_ = std::chrono::system_clock::now();
-	time_t time_now = std::chrono::system_clock::to_time_t(cur_time_);
-	gmtime_r(&time_now, &local_tm);
-#endif
+    tm local_tm = TimePointConvertTm(std::chrono::system_clock::now());
     std::vector<int> cur_time;
     // std::cout << "当前年为：  " << local_tm.tm_year + 1900 << std::endl;
 	// std::cout << "当前周为：  " << local_tm.tm_wday << std::endl;

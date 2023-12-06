@@ -29,7 +29,7 @@ void AddTimerTask(const char* timer_string, func_t func, const char* id, int cou
  * @param func 
  * @param count 
  */
-void AddDElayTimerTask(const int milliseconds, func_t func, const char* id, int count){
+void AddDelayTimerTask(const int milliseconds, func_t func, const char* id, int count){
     std::string idStr(id);
     mgr->AddDelayTimer(milliseconds, std::move(func), idStr, count);
 }
@@ -60,4 +60,50 @@ void StopAppointed(const char* id){
     std::string idStr(id);
     mgr->RemoveAppointedTimer(idStr);
 }
+
+/**
+ * @brief 获取指定任务ID的最近触发时间
+ * 
+ * @param id 
+ * @return char* 
+ */
+char* GetAppointedIDLatestTimeStr(const char* id){
+    std::string idStr(id);
+    auto latest_time = mgr->GetAppointedIDLatestTimeStr(idStr);
+    static char latest_time_charp[31] = {};
+    strcpy(latest_time_charp, latest_time.data());
+    return latest_time_charp;
+}
+/**
+ * @brief 获取指定任务ID的最近触发时间
+ * 
+ * @param id 
+ * @return char* 
+ */
+char* GetCurrentTimeStr(){
+    static char now_time_charp[31] = {};
+    auto now_time = std::chrono::system_clock::now();
+    strcpy(now_time_charp, GetTimeStr(now_time).data());
+    return now_time_charp;
+}
+/**
+ * @brief 获取指定任务ID的剩余时间
+ * 
+ * @param id 
+ * @return const int 
+ */
+const int GetAppointedIDRemainingTime(const char* id){
+    std::string idStr(id);
+    const int remaining_time = mgr->GetAppointedIDRemainingTime(idStr);
+    return remaining_time;
+}
+
+
+bool JudgeIDIsExist(const char* id){
+    std::string idStr(id);
+    return mgr->JudgeIDIsExist(idStr);
+}
+
+
+
 } // extern "C"

@@ -35,9 +35,12 @@ c_callback2 = func_t(python_callback2)
 # 这是确保 Python 与 C++ 之间的接口正确匹配的关键步骤。
 lib.AddTimerTask.argtypes = [ctypes.c_char_p, func_t, ctypes.c_char_p, ctypes.c_int]#指定 AddTimerTask 函数的参数类型。
 lib.AddTimerTask.restype = None#指定 AddTimerTask 函数的返回类型。
-
-id1 = '33'
-id2 = '22'
+# 设置返回类型为 c_char_p
+lib.GetAppointedIDLatestTimeStr.restype = ctypes.c_char_p
+lib.GetCurrentTimeStr.restype = ctypes.c_char_p
+lib.JudgeIDIsExist.restype = ctypes.c_bool
+id1 = b'3'
+id2 = b'22'
 # 增加定时任务
 import argparse
 parser = argparse.ArgumentParser()
@@ -53,22 +56,28 @@ print(args.cron1)
 print(args.cron2)
 cron_expression =  ((str)(args.cron1)).encode()
 cron_expression1 = ((str)(args.cron2)).encode()
-lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1.encode()), ctypes.c_int(-1))
-lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2.encode()), ctypes.c_int(-1))
+lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1), ctypes.c_int(-1))
+lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2), ctypes.c_int(-1))
 
 def Thread():
     print("更新线程")
     while True:
         lib.Update()
+        # print(lib.GetAppointedIDLatestTimeStr(id1))
+        print(lib.GetCurrentTimeStr())
+        # print(lib.GetAppointedIDRemainingTime(id1))
+        # print(lib.JudgeIDIsExit("77"))
         time.sleep(0.1)
 # 创建线程
 _thread.start_new_thread(Thread,())
 # 在循环中不断去更新时间轮索引
+
+
 count = 0
 while True:
     count = count +1
     # 5s后取消指定id的任务
     if(count > 5):
-        lib.StopAppointed(id2)
-    lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id2.encode()), ctypes.c_int(10))
+        lib.StopAppointed(ctypes.c_char_p(id2))
+    lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id2), ctypes.c_int(10))
     time.sleep(1)
