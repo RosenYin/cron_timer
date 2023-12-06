@@ -53,10 +53,10 @@ void Log_(const char* timer_string){
     Log(timer_string);
 }
 /**
- * @brief 停止所有任务
+ * @brief 停止指定任务
  * 
  */
-void StopAppointed(const char* id){
+void StopAppointedTask(const char* id){
     std::string idStr(id);
     mgr->RemoveAppointedTimer(idStr);
 }
@@ -75,7 +75,7 @@ char* GetAppointedIDLatestTimeStr(const char* id){
     return latest_time_charp;
 }
 /**
- * @brief 获取指定任务ID的最近触发时间
+ * @brief 获取当前系统时间
  * 
  * @param id 
  * @return char* 
@@ -98,7 +98,13 @@ const int GetAppointedIDRemainingTime(const char* id){
     return remaining_time;
 }
 
-
+/**
+ * @brief 判断任务是否存在列表中
+ * 
+ * @param id 
+ * @return true 
+ * @return false 
+ */
 bool JudgeIDIsExist(const char* id){
     std::string idStr(id);
     return mgr->JudgeIDIsExist(idStr);
