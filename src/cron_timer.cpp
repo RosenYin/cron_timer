@@ -619,10 +619,19 @@ bool TimerMgr::RemoveAppointedTimer(std::string id) {
         assert(("不存在该ID任务",false));
         return false;
     }
-    it->second->Cancel();
-    std::vector<std::string>::iterator it_ = find(id_.begin(), id_.end(), id);
-    id_.erase(it_);
-    return true;
+    try
+    {
+        it->second->Cancel();
+        std::vector<std::string>::iterator it_ = find(id_.begin(), id_.end(), id);
+        id_.erase(it_);
+        return true;
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return false;
+    }
+    
 }
 
 // 获取最接近的触发时间点

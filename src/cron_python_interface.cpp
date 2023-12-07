@@ -59,9 +59,9 @@ void Log_(const char* timer_string){
  * @brief 停止指定任务
  * 
  */
-void StopAppointedTask(const char* id){
+bool StopAppointedTask(const char* id){
     std::string idStr(id);
-    mgr->RemoveAppointedTimer(idStr);
+    return mgr->RemoveAppointedTimer(idStr);
 }
 
 /**
