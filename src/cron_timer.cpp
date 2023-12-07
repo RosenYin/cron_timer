@@ -576,9 +576,14 @@ TimerPtr TimerMgr::AddTimer(const std::string& timer_string, FUNC_CALLBACK&& fun
             // p->Next(CronExpression::DT_SECOND);
             insert(p);
             return p;
+        }else{
+            Log("插入重复ID");
+            return nullptr;
         }
+    }else{
+        Log("设定的时间最大值小于当前时间");
+        return nullptr;
     }
-    return nullptr;
 }
 /**
  * @brief 新增一个延时执行的定时器，缺省运行一次

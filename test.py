@@ -44,7 +44,7 @@ id2 = b'22'
 # 增加定时任务
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('--cron1', default= '0 * * ? * * 2023')     # add_argument()指定程序可以接受的命令行选项
+parser.add_argument('--cron1', default= '0 0 0 1 10 ? 2023')     # add_argument()指定程序可以接受的命令行选项
 parser.add_argument('--cron2', default= '* * * ? * * 2023')     # add_argument()指定程序可以接受的命令行选项
 args = parser.parse_args()      # parse_args()从指定的选项中返回一些数据
 print(args)
@@ -57,7 +57,7 @@ print(args.cron2)
 cron_expression =  ((str)(args.cron1)).encode()
 cron_expression1 = ((str)(args.cron2)).encode()
 print(lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1), ctypes.c_int(-1)))
-print(lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id1), ctypes.c_int(-1)))
+print(lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2), ctypes.c_int(-1)))
 
 def Thread():
     print("更新线程")
@@ -79,5 +79,5 @@ while True:
     # 5s后取消指定id的任务
     if(count > 5):
         lib.StopAppointedTask(ctypes.c_char_p(id2))
-    lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id2), ctypes.c_int(10))
+    # lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id2), ctypes.c_int(10))
     time.sleep(1)
