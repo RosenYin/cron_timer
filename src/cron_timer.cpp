@@ -444,9 +444,10 @@ TimerMgr* TimerMgr::GetInstance(){
  * 这将阻止新的定时器添加到管理器中。
  * 
  */
-void TimerMgr::Stop() {
+bool TimerMgr::Stop() {
     timers_.clear();
     stopped_ = true;
+    return stopped_;
 }
 
 std::string TimerMgr::GetAppointedIDLatestTimeStr(std::string id_){

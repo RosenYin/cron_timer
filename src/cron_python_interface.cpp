@@ -15,7 +15,10 @@ extern "C" {
  * 
  * @param timer_string 
  * @param func 
+ * @param id 
  * @param count 
+ * @return true 
+ * @return false 
  */
 bool AddTimerTask(const char* timer_string, func_t func, const char* id, int count){
     std::string timerStr(timer_string);
@@ -28,29 +31,42 @@ bool AddTimerTask(const char* timer_string, func_t func, const char* id, int cou
 /**
  * @brief 调用TimerMgr类的增加间隔时间执行的任务接口
  * 
- * @param timer_string 
+ * @param milliseconds 
  * @param func 
+ * @param id 
  * @param count 
+ * @return true 
+ * @return false 
  */
-void AddDelayTimerTask(const int milliseconds, func_t func, const char* id, int count){
+bool AddDelayTimerTask(const int milliseconds, func_t func, const char* id, int count){
     std::string idStr(id);
-    mgr->AddDelayTimer(milliseconds, std::move(func), idStr, count);
+    auto p = mgr->AddDelayTimer(milliseconds, std::move(func), idStr, count);
+    if(p != nullptr)
+        return true;
+    return false;
 }
 /**
  * @brief 时间轮索引更新
  * 
+ * @return size_t 
  */
-void Update(){
-    mgr->Update();
+size_t Update(){
+    return mgr->Update();
 }
 /**
  * @brief 停止所有任务
  * 
+ * @return true 
+ * @return false 
  */
-void StopAll(){
-    mgr->Stop();
+bool StopAll(){
+    return mgr->Stop();
 }
-
+/**
+ * @brief 打印Log，只能为字符差串
+ * 
+ * @param timer_string 
+ */
 void Log_(const char* timer_string){
     std::string timerStr(timer_string);
     Log(timer_string);
@@ -58,6 +74,9 @@ void Log_(const char* timer_string){
 /**
  * @brief 停止指定任务
  * 
+ * @param id 
+ * @return true 
+ * @return false 
  */
 bool StopAppointedTask(const char* id){
     std::string idStr(id);

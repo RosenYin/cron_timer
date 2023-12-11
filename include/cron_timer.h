@@ -112,7 +112,7 @@ public:
 	// 获取最接近的触发时间点
 	std::chrono::system_clock::time_point GetNearestTime();
 	size_t Update();
-	void Stop();
+	bool Stop();
 
 	std::string GetAppointedIDLatestTimeStr(std::string id_);
 	int GetAppointedIDRemainingTime(std::string id_);
