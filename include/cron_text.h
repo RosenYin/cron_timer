@@ -20,12 +20,12 @@ class CronExpression {
 public:
 	enum DATA_TYPE {
 		DT_SECOND = 0,
-		DT_MINUTE = 1,
-		DT_HOUR = 2,
-		DT_DAY_OF_MONTH = 3,
-		DT_WEEK = 4,
-		DT_MONTH = 5,
-		DT_YEAR = 6,
+		DT_MINUTE,
+		DT_HOUR,
+		DT_DAY_OF_MONTH,
+		DT_WEEK,
+		DT_MONTH,
+		DT_YEAR,
 		DT_MAX,
 	};
 	static bool GetValues(const std::string& input, DATA_TYPE data_type, std::vector<int>& values);

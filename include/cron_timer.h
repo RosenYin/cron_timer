@@ -25,7 +25,7 @@ tm TimePointConvertTm(std::chrono::system_clock::time_point time_point_);
 time_t TmConvertTime_t(tm& tm_time_);
 std::string GetTimeStr(std::chrono::system_clock::time_point time_point_);
 uint64_t GetMaxMDayFromCurrentMonth();
-int64_t GetLatestMDayWithYearMonthWeek(int year, int month, int weekend);
+int64_t GetLatestMDayWithYearMonthWeek(int year, int month, int weekend, int day_offset=0);
 
 class BaseTimer : public std::enable_shared_from_this<BaseTimer> {
 	// 声明 TimerMgr 类为友元类，允许 TimerMgr 类访问 BaseTimer 类的私有成员。
@@ -70,6 +70,7 @@ private:
 
 	void Next(int data_type);
 	int GetCurValue(int data_type) const;
+	int SetCurValue(int data, int data_type) const;
 
 private:
 	std::vector<CronWheel> wheels_; // 用于存储不同时间字段的 CronWheel 对象

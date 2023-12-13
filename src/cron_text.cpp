@@ -108,7 +108,15 @@ size_t Text::SplitInt(std::vector<int>& number_result, const std::string& is, ch
 size_t Text::SortWithSelfPrioritySplitStr(std::vector<std::string>& os, const std::string& is, char c){
     int size = SplitStr(os, is, c);
     std::vector<uint16_t> date_str_priority = {0,1,2,3,5,4,6};
-    if(size == 6) date_str_priority.pop_back();
+    // if(size == 6) date_str_priority.pop_back();
+	if(size == 6){
+		// 要移除的元素
+		int elementToRemove = 6;
+		// 使用 std::remove 移除元素
+		auto newEnd = std::remove(date_str_priority.begin(), date_str_priority.end(), elementToRemove);
+		// 使用 erase 删除不需要的元素
+		date_str_priority.erase(newEnd, date_str_priority.end());
+	}
     std::vector<std::string> temp;
     for(auto i : date_str_priority)
     {
@@ -193,7 +201,7 @@ bool CronExpression::GetValues(const std::string& input, DATA_TYPE data_type, st
 		//范围
 		std::vector<int> v;
 		Text::SplitInt(v, input, CRON_SEPERATOR_RANGE);
-		sort(v.begin(), v.end());
+		sort(v.begin(), v.end()); // 排序
 		if (v.size() != 2) {
 			return false;
 		}
