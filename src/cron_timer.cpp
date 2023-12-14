@@ -140,6 +140,7 @@ BaseTimer::~BaseTimer() {}
  */
 void BaseTimer::Cancel() {
 	if (!GetIsInList()) {
+        // std::cout << "要删除的任务不在任务列表中" << std::endl;
 		return;
 	}
 	//创建一个 shared_ptr 对象 self，以确保在执行取消操作期间计时器对象不会被销毁。
@@ -147,6 +148,7 @@ void BaseTimer::Cancel() {
 	auto self = shared_from_this();
 	//将计时器从 TimerMgr 对象的列表中移除
 	owner_.remove(self);
+    // std::cout << "移除任务成功" << std::endl;
 }
 /**
  * @brief 将当前时间轮索引的时间，与当前时间做差，如果时间差值大于-1,返回true
@@ -758,15 +760,35 @@ TimerPtr TimerMgr::AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, std::st
 
 bool TimerMgr::RemoveAppointedTimer(std::string id) {
     auto it = id_pointer.find(id);
+    for (auto i : id_)
+    {
+        /* code */
+        // std::cout << "0 ------------------------------- 0 " << i << std::endl;
+    }
     if (it == id_pointer.end()) {
-        assert(("不存在该ID任务",false));
+        // assert(("不存在该ID任务",false));
         return false;
     }
+    std::vector<std::string>::iterator it_ = find(id_.begin(), id_.end(), id);
+    if(it_ == id_.end())
+    {
+        // std::cout << "id在id列表已经不存在 " << std::endl;
+        return false;
+    }
+    else std::cout << "找到" << std::endl;
     try
     {
-        it->second->Cancel();
-        std::vector<std::string>::iterator it_ = find(id_.begin(), id_.end(), id);
+        // std::cout << "1 ------------------------------- 1" << std::endl;
+        // std::cout << "2 ------------------------------- 2" << std::endl;
+        for (auto i : id_)
+        {
+            /* code */
+            // std::cout << "2.5 ------------------------------- 2.5:: " << i << std::endl;
+        }
+        
         id_.erase(it_);
+        it->second->Cancel();
+        // std::cout << "3 ------------------------------- 3" << std::endl;
         return true;
     }
     catch(const std::exception& e)

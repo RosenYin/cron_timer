@@ -59,7 +59,7 @@ print(args.cron2)
 cron_expression =  ((str)(args.cron1)).encode()
 cron_expression1 = ((str)(args.cron2)).encode()
 print(lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1), ctypes.c_int(-1)))
-print(lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2), ctypes.c_int(-1)))
+print(lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2), ctypes.c_int(100)))
 
 def Thread():
     print("更新线程")
@@ -79,10 +79,9 @@ count = 0
 while True:
     count = count +1
     # 5s后取消指定id的任务
-    if(count > 3):
+    if(count > 100):
         pass
         # a= lib.StopAppointedTask(ctypes.c_char_p(id2))
-        # print("删除-------",lib.StopAppointedTask(ctypes.c_char_p(b'id2')))
-        # print("删除-------",lib.StopAppointedTask(ctypes.c_char_p(id2)))
+        # print("删除-------",lib.StopAppointedTask(ctypes.c_char_p(id1)))
     # lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id2), ctypes.c_int(10))
     time.sleep(1)
