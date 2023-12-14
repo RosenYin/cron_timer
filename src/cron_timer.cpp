@@ -16,6 +16,8 @@
 #include <thread>
 #include <cstdarg>
 #include <cmath>
+#include <numeric>
+
 #include "cron_log.h"
 
 namespace cron_timer {
@@ -425,6 +427,14 @@ CronWheel UpdateMDayWithYearMonthWeek(CronWheel week_wheel, int month, int year)
     
 	return m_day_wheel;
 }
+std::vector<int> generateRange(int minValue, int maxValue) {
+    std::vector<int> result(maxValue - minValue + 1);
+    
+    // 使用 std::iota 填充范围
+    std::iota(result.begin(), result.end(), minValue);
+
+    return result;
+}
 /**
  * @brief 用于将时间字段前进到下一个时间点，以便在特定时间点触发任务。
  * 它递归调用自身，依次前进每个时间字段。
@@ -442,11 +452,16 @@ void CronTimer::Next(int data_type) {
     if(wheel.GetWheelType() == CronExpression::DT_WEEK){
         Next(data_type + 1);
     }
-    if(wheels_[CronExpression::DT_WEEK].values[wheels_[CronExpression::DT_WEEK].cur_index] != -1){
-        wheels_[CronExpression::DT_DAY_OF_MONTH].values = UpdateMDayWithYearMonthWeek(wheels_[CronExpression::DT_WEEK]
-        ,wheels_[CronExpression::DT_MONTH].values[wheels_[CronExpression::DT_MONTH].cur_index] 
-        ,wheels_[CronExpression::DT_YEAR].values[wheels_[CronExpression::DT_YEAR].cur_index]).values;
-        // std::cout << wheels_[CronExpression::DT_MONTH].values[wheels_[CronExpression::DT_MONTH].cur_index] << std::endl;
+    if(wheel.GetWheelType() >= CronExpression::DT_HOUR){
+        if(wheels_[CronExpression::DT_WEEK].values[wheels_[CronExpression::DT_WEEK].cur_index] != -1){
+                wheels_[CronExpression::DT_DAY_OF_MONTH].values = UpdateMDayWithYearMonthWeek(wheels_[CronExpression::DT_WEEK]
+                ,wheels_[CronExpression::DT_MONTH].values[wheels_[CronExpression::DT_MONTH].cur_index] 
+                ,wheels_[CronExpression::DT_YEAR].values[wheels_[CronExpression::DT_YEAR].cur_index]).values;
+            // std::cout << wheels_[CronExpression::DT_MONTH].values[wheels_[CronExpression::DT_MONTH].cur_index] << std::endl;
+        }else{
+                uint64_t max_day = GetMaxMDayFromCurrentMonth();
+                wheels_[CronExpression::DT_DAY_OF_MONTH].values = generateRange(1, max_day);
+        }
     }
     if(wheel.GetWheelType() != CronExpression::DT_WEEK){
         if (wheel.cur_index == wheel.values.size() - 1) {
