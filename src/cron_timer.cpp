@@ -621,13 +621,6 @@ bool TimerMgr::JudgeIDIsExist(std::string id_){
     if (it == id_pointer.end()) {
         return false;
     }
-    // std::cout << "大小: "<< id_pointer.size() << std::endl;
-    for (auto i : id_pointer)
-    {
-        /* code */
-        // std::cout << "--------"<< (*it).first << std::endl;
-    }
-    
     // std::cout << "*it: "<< (*it).first << std::endl;    
     return true;
 }
@@ -768,13 +761,8 @@ TimerPtr TimerMgr::AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, std::st
 
 bool TimerMgr::RemoveAppointedTimer(std::string id) {
     auto it = id_pointer.find(id);
-    for (auto i : id_pointer)
-    {
-        /* code */
-        // std::cout << "0 ------------------------------- 0 " << i.first << std::endl;
-    }
     if (it == id_pointer.end()) {
-        // assert(("不存在该ID任务",false));
+        Log("不存在该ID任务",false);
         return false;
     }
     std::vector<std::string>::iterator it_ = find(id_.begin(), id_.end(), id);
@@ -783,22 +771,13 @@ bool TimerMgr::RemoveAppointedTimer(std::string id) {
     {
         it->second->Cancel();
         id_pointer.erase(it);
-        for (auto i : id_pointer)
-        {
-            /* code */
-            // std::cout << "1 ------------------------------- 1 " << i.first << std::endl;
-        }
-        // std::cout << "1 ------------------------------- 1" << std::endl;
-        // std::cout << "2 ------------------------------- 2" << std::endl;
         if(it_ == id_.end())
         {
-            // std::cout << "id在id列表已经不存在 " << std::endl;
+            Log("不存在该ID任务",false);
             return false;
         }
         if(it_ != id_.end())
             id_.erase(it_);
-        
-        // std::cout << "3 ------------------------------- 3" << std::endl;
         return true;
     }
     catch(const std::exception& e)
