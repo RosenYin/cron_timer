@@ -454,13 +454,14 @@ void CronTimer::Next(int data_type) {
     }
     if(wheel.GetWheelType() >= CronExpression::DT_HOUR){
         if(wheels_[CronExpression::DT_WEEK].values[wheels_[CronExpression::DT_WEEK].cur_index] != -1){
-                wheels_[CronExpression::DT_DAY_OF_MONTH].values = UpdateMDayWithYearMonthWeek(wheels_[CronExpression::DT_WEEK]
-                ,wheels_[CronExpression::DT_MONTH].values[wheels_[CronExpression::DT_MONTH].cur_index] 
-                ,wheels_[CronExpression::DT_YEAR].values[wheels_[CronExpression::DT_YEAR].cur_index]).values;
+            wheels_[CronExpression::DT_DAY_OF_MONTH].values = UpdateMDayWithYearMonthWeek(wheels_[CronExpression::DT_WEEK]
+            ,wheels_[CronExpression::DT_MONTH].values[wheels_[CronExpression::DT_MONTH].cur_index] 
+            ,wheels_[CronExpression::DT_YEAR].values[wheels_[CronExpression::DT_YEAR].cur_index]).values;
             // std::cout << wheels_[CronExpression::DT_MONTH].values[wheels_[CronExpression::DT_MONTH].cur_index] << std::endl;
         }else{
-                uint64_t max_day = GetMaxMDayFromCurrentMonth();
-                wheels_[CronExpression::DT_DAY_OF_MONTH].values = generateRange(1, max_day);
+            uint64_t max_day = GetMaxMDayFromCurrentMonth();
+            if(wheels_[CronExpression::DT_WEEK].values.size() == max_day)
+            wheels_[CronExpression::DT_DAY_OF_MONTH].values = generateRange(1, max_day);
         }
     }
     if(wheel.GetWheelType() != CronExpression::DT_WEEK){
