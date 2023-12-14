@@ -82,6 +82,7 @@ while True:
     if(count > 100):
         pass
         # a= lib.StopAppointedTask(ctypes.c_char_p(id2))
-        # print("删除-------",lib.StopAppointedTask(ctypes.c_char_p(id1)))
+        print("删除-------",lib.StopAppointedTask(ctypes.c_char_p(id1)))
+        print(lib.JudgeIDIsExist(ctypes.c_char_p(id1)))
     # lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id2), ctypes.c_int(10))
     time.sleep(1)
