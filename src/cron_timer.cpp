@@ -158,6 +158,7 @@ bool BaseTimer::compareCurWheelIndexTime(){
     std::chrono::system_clock::time_point startTime = GetWheelCurIndexTime();
     auto currentTime = std::chrono::system_clock::now();
     std::chrono::duration<double> diff = startTime  - currentTime;
+    // std::cout << "剩余时间" << diff.count() << std::endl;
     if(diff.count() > -1) return true;
     else return false;
 }
@@ -310,9 +311,11 @@ void CronTimer::DoFunc() {
             Log("移除失败");
 		 // 将时间字段前进到下一个时间点，以便在下一个时间点触发任务,从s开始
 		// 检查是否需要继续触发计时器
+        Next(CronExpression::DT_SECOND);
 		if (count_left_ != 0 && !over_flowed_) {
+            // std::cout << "溢出--标志：" << over_flowed_ << std::endl;
             // Log("---------即将重新插入-------");
-            Next(CronExpression::DT_SECOND);
+            
 			owner_.insert(self); // 将计时器重新插入计时器管理器的列表中，以便在下一个时间点再次触发
             // Log("---------重新插入完毕-------");
 		}
@@ -443,29 +446,33 @@ std::vector<int> generateRange(int minValue, int maxValue) {
  * @param data_type 
  */
 void CronTimer::Next(int data_type) {
+// std::cout << "类型为"<< data_type << std::endl;
     if (data_type >= CronExpression::DT_MAX) {
         // 溢出了表明此定时器已经失效，不应该再被执行
         over_flowed_ = true;
+        // std::cout << "yichu::==================--- "<< std::endl;
         return;
     }
+    
     auto& wheel = wheels_[data_type];
     if(wheel.GetWheelType() == CronExpression::DT_WEEK){
         Next(data_type + 1);
     }
-    if(wheel.GetWheelType() >= CronExpression::DT_HOUR){
+    if(wheel.GetWheelType() >= CronExpression::DT_DAY_OF_MONTH){
         if(wheels_[CronExpression::DT_WEEK].values[wheels_[CronExpression::DT_WEEK].cur_index] != -1){
             wheels_[CronExpression::DT_DAY_OF_MONTH].values = UpdateMDayWithYearMonthWeek(wheels_[CronExpression::DT_WEEK]
-            ,wheels_[CronExpression::DT_MONTH].values[wheels_[CronExpression::DT_MONTH].cur_index] 
-            ,wheels_[CronExpression::DT_YEAR].values[wheels_[CronExpression::DT_YEAR].cur_index]).values;
+                ,wheels_[CronExpression::DT_MONTH].values[wheels_[CronExpression::DT_MONTH].cur_index]
+                ,wheels_[CronExpression::DT_YEAR].values[wheels_[CronExpression::DT_YEAR].cur_index]).values;
             // std::cout << wheels_[CronExpression::DT_MONTH].values[wheels_[CronExpression::DT_MONTH].cur_index] << std::endl;
         }else{
             uint64_t max_day = GetMaxMDayFromCurrentMonth();
             if(wheels_[CronExpression::DT_WEEK].values.size() == max_day)
-            wheels_[CronExpression::DT_DAY_OF_MONTH].values = generateRange(1, max_day);
+                wheels_[CronExpression::DT_DAY_OF_MONTH].values = generateRange(1, max_day);
         }
     }
     if(wheel.GetWheelType() != CronExpression::DT_WEEK){
         if (wheel.cur_index == wheel.values.size() - 1) {
+        // std::cout << wheel.values[wheel.cur_index] << std::endl;
             wheel.cur_index = 0;
             Next(data_type + 1);
         } else {
