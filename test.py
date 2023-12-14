@@ -28,21 +28,27 @@ def PrintTime():
 lib.AddTimerTask.argtypes = [ctypes.c_char_p, func_t, ctypes.c_char_p, ctypes.c_int]#指定 AddTimerTask 函数的参数类型。
 lib.AddTimerTask.restype = bool#指定 AddTimerTask 函数的返回类型。
 lib.StopAppointedTask.restype = ctypes.c_bool
+lib.AddDelayTimerTask.argtypes = [ctypes.c_int, func_t, ctypes.c_char_p, ctypes.c_int]#指定 AddTimerTask 函数的参数类型。
+lib.AddDelayTimerTask.restype = ctypes.c_bool
 # 设置返回类型为 c_char_p
 lib.GetAppointedIDLatestTimeStr.restype = ctypes.c_char_p
 lib.GetCurrentTimeStr.restype = ctypes.c_char_p
 lib.JudgeIDIsExist.restype = ctypes.c_bool
-id1 = b'3'
+id1 = b'1'
 id2 = b'22'
+id3 = b'333'
 # Define a simple Python function to be called from C++
 def python_callback1():
     print(PrintTime(),"-------", lib.GetAppointedIDLatestTimeStr(id1).decode(), "-------")
 def python_callback2():
     print(PrintTime(),"=======", lib.GetAppointedIDLatestTimeStr(id2).decode(), lib.GetAppointedIDLatestTimeStr(id1).decode(), "=======")
+def python_callback3():
+    print(PrintTime(),"=======", lib.GetAppointedIDLatestTimeStr(id3).decode(), lib.GetAppointedIDLatestTimeStr(id1).decode(), "=======")
 # 将Python中的函数 python_callback 转换为C函数指针，以便它可以被传递给C++函数。
 # func_t 是 ctypes.CFUNCTYPE(None) 类型的实例，所以它可以接受没有返回值的函数。
 c_callback1 = func_t(python_callback1)
 c_callback2 = func_t(python_callback2)
+c_callback3 = func_t(python_callback3)
 # 增加定时任务
 import argparse
 parser = argparse.ArgumentParser()
@@ -60,6 +66,7 @@ cron_expression =  ((str)(args.cron1)).encode()
 cron_expression1 = ((str)(args.cron2)).encode()
 print(lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1), ctypes.c_int(-1)))
 print(lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2), ctypes.c_int(100)))
+print(lib.AddDelayTimerTask(10000000, c_callback3, ctypes.c_char_p(id3), ctypes.c_int(100)))
 
 def Thread():
     print("更新线程")
@@ -83,9 +90,9 @@ while True:
         pass
         # a= lib.StopAppointedTask(ctypes.c_char_p(id2))
         print("----------------------------------------------")
-        print(lib.JudgeIDIsExist(ctypes.c_char_p(id1)))
-        print("删除-------",lib.StopAppointedTask(ctypes.c_char_p(id1)))
-        print(lib.JudgeIDIsExist(ctypes.c_char_p(id1)))
+        print(lib.JudgeIDIsExist(ctypes.c_char_p(id3)))
+        print("删除-------",lib.StopAppointedTask(ctypes.c_char_p(id3)))
+        print(lib.JudgeIDIsExist(ctypes.c_char_p(id3)))
         count = 0
     # lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id2), ctypes.c_int(10))
     time.sleep(1)

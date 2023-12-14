@@ -754,6 +754,7 @@ TimerPtr TimerMgr::AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, std::st
     if(!isWheelsDuplicate){
         auto p = std::make_shared<LaterTimer>(*this, milliseconds, std::move(func), count, id);
         id_pointer.insert(std::make_pair(id, p));
+        id_.emplace_back(id);
         insert(p);
         return p;
     }else return nullptr;
