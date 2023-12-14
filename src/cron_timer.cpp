@@ -87,15 +87,15 @@ uint64_t GetMaxMDayFromCurrentMonth(){
  */
 int64_t GetLatestMDayWithYearMonthWeek(int year, int month, int weekend, int day_offset){
 	struct tm cur_utc_time = TimePointConvertTm(std::chrono::system_clock::now());//创建当前utc时间结构体，用来存放转化成utc的时间
-        std::cout << "cur_utc_time 时间 年 为：  " << cur_utc_time.tm_year + 1900 << std::endl;
-		std::cout << "cur_utc_time 时间 周 为：  " << cur_utc_time.tm_wday << std::endl;
-		std::cout << "cur_utc_time 时间 月 为：  " << cur_utc_time.tm_mon+1  << std::endl;
-		std::cout << "cur_utc_time 时间 日 为：  " << cur_utc_time.tm_mday << std::endl;
-		std::cout << "cur_utc_time 时间 时 为：  " << cur_utc_time.tm_hour << std::endl;
-		std::cout << "cur_utc_time 时间 分 为：  " << cur_utc_time.tm_min << std::endl;
-		std::cout << "cur_utc_time 时间 秒 为：  " << cur_utc_time.tm_sec << std::endl;
-        std::cout << "传入的年 为：  " << year << std::endl;
-        std::cout << "传入的月 为：  " << month << std::endl;
+        // std::cout << "cur_utc_time 时间 年 为：  " << cur_utc_time.tm_year + 1900 << std::endl;
+		// std::cout << "cur_utc_time 时间 周 为：  " << cur_utc_time.tm_wday << std::endl;
+		// std::cout << "cur_utc_time 时间 月 为：  " << cur_utc_time.tm_mon+1  << std::endl;
+		// std::cout << "cur_utc_time 时间 日 为：  " << cur_utc_time.tm_mday << std::endl;
+		// std::cout << "cur_utc_time 时间 时 为：  " << cur_utc_time.tm_hour << std::endl;
+		// std::cout << "cur_utc_time 时间 分 为：  " << cur_utc_time.tm_min << std::endl;
+		// std::cout << "cur_utc_time 时间 秒 为：  " << cur_utc_time.tm_sec << std::endl;
+        // std::cout << "传入的年 为：  " << year << std::endl;
+        // std::cout << "传入的月 为：  " << month << std::endl;
 	tm cur_time;
 	memset(&cur_time, 0, sizeof(cur_time));
 	cur_time.tm_year = year - 1900;
@@ -103,7 +103,7 @@ int64_t GetLatestMDayWithYearMonthWeek(int year, int month, int weekend, int day
 	if(cur_time.tm_mon != cur_utc_time.tm_mon || cur_time.tm_year > cur_utc_time.tm_year)
 		cur_time.tm_mday = 1;
 	else cur_time.tm_mday = cur_utc_time.tm_mday + day_offset;
-    std::cout << "推断日1 为：  " << month << std::endl;
+    // std::cout << "推断日1 为：  " << month << std::endl;
 
     #if USE_UTC==0
     mktime(&cur_time);
@@ -113,7 +113,7 @@ int64_t GetLatestMDayWithYearMonthWeek(int year, int month, int weekend, int day
     uint64_t currnet_mday;
 	if(weekend >= cur_time.tm_wday){
 		currnet_mday =  cur_time.tm_mday + weekend - cur_time.tm_wday;
-        std::cout << "最近的日期 为：  " << currnet_mday << std::endl;
+        // std::cout << "最近的日期 为：  " << currnet_mday << std::endl;
     }
 	else
 		currnet_mday =  7 - cur_time.tm_wday + weekend + cur_time.tm_mday;
@@ -270,23 +270,23 @@ void CronTimer::InitWheelIndex(){
             }
         }
     }
-    std::cout<<std::endl;
-		for (std::vector<CronWheel>::iterator it = wheels_.begin(); it != wheels_.end(); it++)
-		{
-			for (std::vector<int>::iterator it1 = (*it).values.begin(); it1 != (*it).values.end(); it1++)
-			{
-				std::cout << (*it1) << " ";
+        // std::cout<<std::endl;
+		// for (std::vector<CronWheel>::iterator it = wheels_.begin(); it != wheels_.end(); it++)
+		// {
+		// 	for (std::vector<int>::iterator it1 = (*it).values.begin(); it1 != (*it).values.end(); it1++)
+		// 	{
+		// 		std::cout << (*it1) << " ";
 				
-			}
-			std::cout <<"wheel_type:" <<(*it).GetWheelType()  << "  ";
-            std::cout <<"wheel_cur_index:" <<(*it).cur_index  << "  ";
-			std::cout <<"wheel_max:" <<(*it).max_value  << "  ";
-			std::cout <<"wheel_min:" <<(*it).min_value  << "  ";
-			std::cout <<std::endl<< "---------------------------";
-			std::cout << std::endl;
-		}
-		std::cout << "<<<<<<<<<<<<<<<<<<<<<--------------------------->>>>>>>>>>>>>>>>>>>>>";
-		std::cout << std::endl;
+		// 	}
+		// 	std::cout <<"wheel_type:" <<(*it).GetWheelType()  << "  ";
+        //     std::cout <<"wheel_cur_index:" <<(*it).cur_index  << "  ";
+		// 	std::cout <<"wheel_max:" <<(*it).max_value  << "  ";
+		// 	std::cout <<"wheel_min:" <<(*it).min_value  << "  ";
+		// 	std::cout <<std::endl<< "---------------------------";
+		// 	std::cout << std::endl;
+		// }
+		// std::cout << "<<<<<<<<<<<<<<<<<<<<<--------------------------->>>>>>>>>>>>>>>>>>>>>";
+		// std::cout << std::endl;
     // for (std::vector<CronWheel>::iterator i = wheels_.begin(); i != wheels_.end(); i++){
     //     std::cout<<(*i).cur_index << " - "<<(*i).values[(*i).cur_index] << std::endl;
     // }
