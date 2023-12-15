@@ -89,7 +89,7 @@ private:
 	void Next();
 
 private:
-	const int mill_seconds_; // 表示延迟执行的毫秒数。
+	const int seconds_; // 表示延迟执行的毫秒数。
 	int count_left_; // 定时器剩余的执行次数
 	std::chrono::system_clock::time_point cur_time_; // 下一个触发时间点
 };

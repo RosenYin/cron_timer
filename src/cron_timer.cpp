@@ -501,9 +501,9 @@ int CronTimer::GetCurValue(int data_type) const {
  * @brief 继承自 BaseTimer 类,用于在一定延迟之后执行回调函数
  * 
  */
-LaterTimer::LaterTimer(TimerMgr& owner, int milliseconds, FUNC_CALLBACK&& func, int count, std::string id)
+LaterTimer::LaterTimer(TimerMgr& owner, int seconds, FUNC_CALLBACK&& func, int count, std::string id)
     : BaseTimer(owner, std::move(func), id)
-    , mill_seconds_(milliseconds)
+    , seconds_(seconds)
     , count_left_(count)
     , cur_time_(std::chrono::system_clock::now())
 {
@@ -547,9 +547,11 @@ void LaterTimer::Next() {
         // 不断递增 cur_time_ 成员，直到其值大于当前系统时间为止，以确保下一个触发时间点在未来。
         // 这个方法会不断增加 cur_time_ 的值，直到满足延迟条件。
         if (cur_time_ > time_now) {
+            
             break;
         }
-        cur_time_ = time_now + std::chrono::milliseconds(mill_seconds_);
+        // cur_time_ = time_now + std::chrono::milliseconds(mill_seconds_);
+        cur_time_ = time_now + std::chrono::seconds(seconds_);
         // std::cout << "cur_time_2: " << GetTimeStr(GetWheelCurIndexTime()) << std::endl;
     }
 }
@@ -732,13 +734,13 @@ TimerPtr TimerMgr::AddTimer(const std::string& timer_string, FUNC_CALLBACK&& fun
  * @param count 定时器执行次数
  * @return TimerPtr 
  */
-TimerPtr TimerMgr::AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, std::string id, int count) {
+TimerPtr TimerMgr::AddDelayTimer(int seconds, FUNC_CALLBACK&& func, std::string id, int count) {
     if (stopped_) {
         return nullptr;
     }
 
-    assert(("设定的时间段需要大于0！！",milliseconds > 0));
-    milliseconds = (std::max)(milliseconds, 1); //至少延迟 1 毫秒
+    assert(("设定的时间段需要大于0！！",seconds > 0));
+    seconds = (std::max)(seconds, 1); //至少延迟 1 毫秒
     bool isWheelsDuplicate;
     // std::vector<std::string>::iterator it = find(id_.begin(), id_.end(), id);
     // if (it == id_.end())    isWheelsDuplicate = false; 
@@ -748,7 +750,7 @@ TimerPtr TimerMgr::AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, std::st
     else    isWheelsDuplicate = true;
     //创建 LaterTimer 对象，用于延时执行，然后将其插入到定时器管理器中，最后返回该定时器对象的指针。
     if(!isWheelsDuplicate){
-        auto p = std::make_shared<LaterTimer>(*this, milliseconds, std::move(func), count, id);
+        auto p = std::make_shared<LaterTimer>(*this, seconds, std::move(func), count, id);
         id_pointer.insert(std::make_pair(id, p));
         // id_.emplace_back(id);
         insert(p);

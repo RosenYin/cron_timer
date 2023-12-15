@@ -66,7 +66,7 @@ cron_expression =  ((str)(args.cron1)).encode()
 cron_expression1 = ((str)(args.cron2)).encode()
 # print(lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1), ctypes.c_int(-1)))
 print(lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2), ctypes.c_int(100)))
-print(lib.AddDelayTimerTask(60000, c_callback3, ctypes.c_char_p(id3), ctypes.c_int(100)))
+print(lib.AddDelayTimerTask(60, c_callback3, ctypes.c_char_p(id3), ctypes.c_int(100)))
 
 def Thread():
     print("更新线程")
