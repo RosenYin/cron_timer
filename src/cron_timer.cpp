@@ -517,16 +517,15 @@ void LaterTimer::DoFunc() {
 	
 	// 可能用户在定时器中取消了自己
 	if (GetIsInList()) {
-        if(compareCurWheelIndexTime() && count_left_ != 0){
-	        func_();
-        }
-		auto self = shared_from_this();
+        auto self = shared_from_this();
 		owner_.remove(self);
-
-		if (count_left_ != 0) {
+        if (count_left_ != 0) {
 			Next();
 			owner_.insert(self);
 		}
+        if(compareCurWheelIndexTime() && count_left_ != 0){
+	        func_();
+        }
 	}
 }
 /**
@@ -542,13 +541,16 @@ std::chrono::system_clock::time_point LaterTimer::GetWheelCurIndexTime()const{
 void LaterTimer::Next() {
     // 获取当前时间
     auto time_now = std::chrono::system_clock::now();
+    // std::cout << "time_now: " << GetTimeStr(time_now) << std::endl;
+    // std::cout << "cur_time_1: " << GetTimeStr(GetWheelCurIndexTime()) << std::endl;
     while (true) {
         // 不断递增 cur_time_ 成员，直到其值大于当前系统时间为止，以确保下一个触发时间点在未来。
         // 这个方法会不断增加 cur_time_ 的值，直到满足延迟条件。
-        cur_time_ += std::chrono::milliseconds(mill_seconds_);
         if (cur_time_ > time_now) {
             break;
         }
+        cur_time_ = time_now + std::chrono::milliseconds(mill_seconds_);
+        // std::cout << "cur_time_2: " << GetTimeStr(GetWheelCurIndexTime()) << std::endl;
     }
 }
 
@@ -585,18 +587,18 @@ bool TimerMgr::Stop() {
     return stopped_;
 }
 
-std::string TimerMgr::GetAppointedIDLatestTimeStr(std::string id_){
-    auto it = id_pointer.find(id_);
+std::string TimerMgr::GetAppointedIDLatestTimeStr(std::string id){
+    auto it = id_pointer.find(id);
     if (it == id_pointer.end()) {
         Log("不存在该ID任务");
-        return "不存在该ID任务";
+        return "1970-01-01 00:00:00";
     }
     auto latest_time = it->second->GetWheelCurIndexTime();
     return GetTimeStr(latest_time);
 }
 
-int TimerMgr::GetAppointedIDRemainingTime(std::string id_){
-    auto it = id_pointer.find(id_);
+int TimerMgr::GetAppointedIDRemainingTime(std::string id){
+    auto it = id_pointer.find(id);
     if (it == id_pointer.end()) {
         assert(("不存在该ID任务",false));
         return -1;
@@ -606,18 +608,8 @@ int TimerMgr::GetAppointedIDRemainingTime(std::string id_){
     return round(diff.count());
 }
 
-std::string TimerMgr::GetAllIDList(){
-    std::string id_list;
-    for (auto i : id_)
-    {
-        /* code */
-        id_list = i + "," + id_list;
-    }
-    return id_list;
-}
-
-bool TimerMgr::JudgeIDIsExist(std::string id_){
-    auto it = id_pointer.find(id_);
+bool TimerMgr::JudgeIDIsExist(std::string id){
+    auto it = id_pointer.find(id);
     if (it == id_pointer.end()) {
         return false;
     }
@@ -707,15 +699,16 @@ TimerPtr TimerMgr::AddTimer(const std::string& timer_string, FUNC_CALLBACK&& fun
     if(time_reasonable_)
     {
         bool isWheelsDuplicate;
-        std::vector<std::string>::iterator it = find(id_.begin(), id_.end(), id);
-        if (it == id_.end()) {
-           isWheelsDuplicate = false; 
-        }else {
-            isWheelsDuplicate = true;
-        }
+        // std::vector<std::string>::iterator it = find(id_.begin(), id_.end(), id);
+        // if (it == id_.end()) isWheelsDuplicate = false;
+        // else isWheelsDuplicate = true;
+
+        auto it = id_pointer.find(id);
+        if (it == id_pointer.end())    isWheelsDuplicate = false; 
+        else    isWheelsDuplicate = true;
         if(!isWheelsDuplicate){
             wheels_gather_.emplace_back(wheels);
-            id_.emplace_back(id);
+            // id_.emplace_back(id);
             auto p = std::make_shared<CronTimer>(*this, std::move(wheels), std::move(func), count, id);
             id_pointer.insert(std::make_pair(id, p));
             p->InitWheelIndex();
@@ -747,15 +740,19 @@ TimerPtr TimerMgr::AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, std::st
     assert(("设定的时间段需要大于0！！",milliseconds > 0));
     milliseconds = (std::max)(milliseconds, 1); //至少延迟 1 毫秒
     bool isWheelsDuplicate;
-    std::vector<std::string>::iterator it = find(id_.begin(), id_.end(), id);
-    if (it == id_.end())    isWheelsDuplicate = false; 
+    // std::vector<std::string>::iterator it = find(id_.begin(), id_.end(), id);
+    // if (it == id_.end())    isWheelsDuplicate = false; 
+    // else    isWheelsDuplicate = true;
+    auto it = id_pointer.find(id);
+    if (it == id_pointer.end())    isWheelsDuplicate = false; 
     else    isWheelsDuplicate = true;
     //创建 LaterTimer 对象，用于延时执行，然后将其插入到定时器管理器中，最后返回该定时器对象的指针。
     if(!isWheelsDuplicate){
         auto p = std::make_shared<LaterTimer>(*this, milliseconds, std::move(func), count, id);
         id_pointer.insert(std::make_pair(id, p));
-        id_.emplace_back(id);
+        // id_.emplace_back(id);
         insert(p);
+        p->DoFunc();
         return p;
     }else return nullptr;
 }
@@ -766,19 +763,19 @@ bool TimerMgr::RemoveAppointedTimer(std::string id) {
         Log("不存在该ID任务",false);
         return false;
     }
-    std::vector<std::string>::iterator it_ = find(id_.begin(), id_.end(), id);
+    // std::vector<std::string>::iterator it_ = find(id_.begin(), id_.end(), id);
     // else std::cout << "找到" << std::endl;
     try
     {
         it->second->Cancel();
         id_pointer.erase(it);
-        if(it_ == id_.end())
-        {
-            Log("不存在该ID任务",false);
-            return false;
-        }
-        if(it_ != id_.end())
-            id_.erase(it_);
+        // if(it_ == id_.end())
+        // {
+        //     Log("不存在该ID任务",false);
+        //     return false;
+        // }
+        // if(it_ != id_.end())
+        //     id_.erase(it_);
         return true;
     }
     catch(const std::exception& e)
@@ -805,11 +802,6 @@ size_t TimerMgr::Update() {
     //获取当前系统时间 time_now。
     auto time_now = std::chrono::system_clock::now();
     size_t count = 0;
-    // std::cout << "update timers 长度-----为： "<< timers_.size() << std::endl;
-    // std::cout << "update list 长度-----为： "<< timers_.begin()->second.size() << std::endl;
-    // auto it_ = timers_.begin();
-    
-    // std::cout << "时间列表中时间为： "<< TimePointConvertInteger(it_->first) << std::endl;
     for (auto it = timers_.begin(); it != timers_.end();) {
         auto expire_time = it->first;
         auto& timer_list = it->second;

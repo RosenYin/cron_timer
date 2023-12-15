@@ -115,10 +115,9 @@ public:
 	size_t Update();
 	bool Stop();
 
-	std::string GetAppointedIDLatestTimeStr(std::string id_);
-	int GetAppointedIDRemainingTime(std::string id_);
-	std::string GetAllIDList();
-	bool JudgeIDIsExist(std::string id_);
+	std::string GetAppointedIDLatestTimeStr(std::string id);
+	int GetAppointedIDRemainingTime(std::string id);
+	bool JudgeIDIsExist(std::string id);
 public:
 	// 获取单实例对象
     static TimerMgr* GetInstance();
