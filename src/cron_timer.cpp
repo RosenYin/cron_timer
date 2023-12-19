@@ -496,7 +496,6 @@ void CronTimer::Next(int data_type) {
     if (data_type >= CronExpression::DT_MAX) {
         // 溢出了表明此定时器已经失效，不应该再被执行
         over_flowed_ = true;
-        // std::cout << "yichu::==================--- "<< std::endl;
         return;
     }
     

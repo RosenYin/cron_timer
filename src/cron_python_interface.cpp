@@ -38,9 +38,9 @@ bool AddTimerTask(const char* timer_string, func_t func, const char* id, int cou
  * @return true 
  * @return false 
  */
-bool AddDelayTimerTask(const int milliseconds, func_t func, const char* id, int count){
+bool AddDelayTimerTask(const int seconds, func_t func, const char* id, int count){
     std::string idStr(id);
-    auto p = mgr->AddDelayTimer(milliseconds, std::move(func), idStr, count);
+    auto p = mgr->AddDelayTimer(seconds, std::move(func), idStr, count);
     if(p != nullptr)
         return true;
     return false;

@@ -41,9 +41,10 @@ id3 = b'333'
 def python_callback1():
     print(PrintTime(),"-------", lib.GetAppointedIDLatestTimeStr(id1).decode(), "-------")
 def python_callback2():
-    print(PrintTime(),"=======", lib.GetAppointedIDLatestTimeStr(id2).decode(), lib.GetAppointedIDLatestTimeStr(id1).decode(), lib.GetAppointedIDRemainingTime(id1),"=======")
+    # print(PrintTime(),"=======", lib.GetAppointedIDLatestTimeStr(id2).decode(), lib.GetAppointedIDLatestTimeStr(id1).decode(), lib.GetAppointedIDRemainingTime(id1),"=======")
+    print(PrintTime(),"=======", lib.GetAppointedIDLatestTimeStr(id2).decode(),"=======")
 def python_callback3():
-    print(PrintTime(),"=======", lib.GetAppointedIDLatestTimeStr(id3).decode(), "=======")
+    print(PrintTime(),"++++++++", lib.GetAppointedIDLatestTimeStr(id3).decode(), "++++++")
 # 将Python中的函数 python_callback 转换为C函数指针，以便它可以被传递给C++函数。
 # func_t 是 ctypes.CFUNCTYPE(None) 类型的实例，所以它可以接受没有返回值的函数。
 c_callback1 = func_t(python_callback1)
@@ -66,16 +67,20 @@ cron_expression =  ((str)(args.cron1)).encode()
 cron_expression1 = ((str)(args.cron2)).encode()
 print("插入id1='1'任务：", lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1), ctypes.c_int(-1)))
 print("插入id2='22'任务：",lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2), ctypes.c_int(100)))
-# print(lib.AddDelayTimerTask(60, c_callback3, ctypes.c_char_p(id3), ctypes.c_int(100)))
-print(bool(lib.RemoveAll()))
-print("插入id1='1'任务：", lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1), ctypes.c_int(-1)))
+print("插入延时3任务：", lib.AddDelayTimerTask(86400, c_callback3, ctypes.c_char_p(id3), ctypes.c_int(-1)))
+print("移除所有任务", bool(lib.RemoveAll()))
+# print("插入id1='1'任务：", lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1), ctypes.c_int(-1)))
 print("插入id2='22'任务：",lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2), ctypes.c_int(100)))
+# print("插入延时3任务：", lib.AddDelayTimerTask(10, c_callback3, ctypes.c_char_p(id3), ctypes.c_int(-1)))
 def Thread():
     print("更新线程")
     while True:
         lib.Update()
         # print(lib.GetAppointedIDLatestTimeStr(id1))
-        # print(lib.GetCurrentTimeStr())
+        # print(lib.GetCurrentTimeStr().decode())
+        # if(lib.GetCurrentTimeStr().decode() == '2023-12-19 16:47:00'):
+        #     print(bool(lib.RemoveAll()))
+
         # print(lib.GetAppointedIDRemainingTime(id1))
         # print(lib.JudgeIDIsExist(id1))
         time.sleep(0.1)
