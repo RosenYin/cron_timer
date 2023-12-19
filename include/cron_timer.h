@@ -116,6 +116,7 @@ public:
 	std::chrono::system_clock::time_point GetNearestTime();
 	size_t Update();
 	bool Stop();
+	bool RemoveAll();
 
 	std::string GetAppointedIDLatestTimeStr(std::string id);
 	int GetAppointedIDRemainingTime(std::string id);

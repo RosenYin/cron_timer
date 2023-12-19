@@ -654,6 +654,14 @@ bool TimerMgr::Stop() {
     return stopped_;
 }
 
+bool TimerMgr::RemoveAll() {
+    id_pointer.clear();
+    if(id_pointer.size() == 0)
+        return true;
+    else
+        return false;
+}
+
 std::string TimerMgr::GetAppointedIDLatestTimeStr(std::string id){
     auto it = id_pointer.find(id);
     if (it == id_pointer.end()) {

@@ -34,8 +34,8 @@ lib.AddDelayTimerTask.restype = ctypes.c_bool
 lib.GetAppointedIDLatestTimeStr.restype = ctypes.c_char_p
 lib.GetCurrentTimeStr.restype = ctypes.c_char_p
 lib.JudgeIDIsExist.restype = ctypes.c_bool
-id1 = b'1'
-id2 = b'22'
+id1 = b'301'
+id2 = b'302'
 id3 = b'333'
 # Define a simple Python function to be called from C++
 def python_callback1():
@@ -64,10 +64,12 @@ print(args.cron1)
 print(args.cron2)
 cron_expression =  ((str)(args.cron1)).encode()
 cron_expression1 = ((str)(args.cron2)).encode()
-print(lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1), ctypes.c_int(-1)))
-print(lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2), ctypes.c_int(100)))
+print("插入id1='1'任务：", lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1), ctypes.c_int(-1)))
+print("插入id2='22'任务：",lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2), ctypes.c_int(100)))
 # print(lib.AddDelayTimerTask(60, c_callback3, ctypes.c_char_p(id3), ctypes.c_int(100)))
-
+print(bool(lib.RemoveAll()))
+print("插入id1='1'任务：", lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1), ctypes.c_int(-1)))
+print("插入id2='22'任务：",lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2), ctypes.c_int(100)))
 def Thread():
     print("更新线程")
     while True:

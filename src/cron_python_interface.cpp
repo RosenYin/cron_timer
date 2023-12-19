@@ -53,6 +53,7 @@ bool AddDelayTimerTask(const int milliseconds, func_t func, const char* id, int 
 size_t Update(){
     return mgr->Update();
 }
+
 /**
  * @brief 停止所有任务
  * 
@@ -61,6 +62,15 @@ size_t Update(){
  */
 bool StopAll(){
     return mgr->Stop();
+}
+/**
+ * @brief 停止所有任务
+ * 
+ * @return true 
+ * @return false 
+ */
+bool RemoveAll(){
+    return mgr->RemoveAll();
 }
 /**
  * @brief 打印Log，只能为字符差串
