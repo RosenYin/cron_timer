@@ -655,6 +655,7 @@ bool TimerMgr::Stop() {
 }
 
 bool TimerMgr::RemoveAll() {
+    timers_.clear();
     id_pointer.clear();
     if(id_pointer.size() == 0)
         return true;
