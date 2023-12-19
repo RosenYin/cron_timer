@@ -198,7 +198,10 @@ CronTimer::CronTimer(TimerMgr& owner, std::vector<CronWheel>&& wheels, FUNC_CALL
     : BaseTimer(owner, std::move(func), id)
     , wheels_(std::move(wheels))
     , over_flowed_(false)
-    , count_left_(count){}
+    , count_left_(count){
+        mday_wheel = wheels_[CronExpression::DT_DAY_OF_MONTH].values;
+    }
+
 /**
  * @brief 初始化时间轮的索引指向为当前或未来最近时间
  * 
@@ -419,7 +422,7 @@ CronWheel UpdateMDayWithYearMonthWeek(CronWheel week_wheel, int month, int year)
         else
             currnet_mday =  7 - cur_time.tm_wday + week_wheel_it + cur_time.tm_mday;
         // cout<< cur_time.tm_mday << endl;
-        while(cur_time.tm_mday < maxday){
+        while(cur_time.tm_mday <= maxday){
             m_day_wheel.values.emplace_back(currnet_mday);
             cur_time.tm_mday = currnet_mday + 7;
             currnet_mday = cur_time.tm_mday;
@@ -439,6 +442,47 @@ std::vector<int> generateRange(int minValue, int maxValue) {
     std::iota(result.begin(), result.end(), minValue);
 
     return result;
+}
+void CronTimer::ResetMDayWheel(std::vector<int> &processedDates){
+    // 当前月份最大值
+    int currentMaxMonthValue = GetMaxMDayFromCurrentMonth();
+
+    // 第三个列表，初始填充为第一个列表的值
+    processedDates = mday_wheel;
+    // 打印初始列表
+    // std::cout << "Processed Dates initially: ";
+    // for (int date : processedDates) {
+    //     std::cout << date << " ";
+    // }
+    // std::cout << std::endl;
+
+    // 移除大于当前月份最大值的元素
+    processedDates.erase(std::remove_if(processedDates.begin(), processedDates.end(), 
+        [currentMaxMonthValue](int value) {
+            return value > currentMaxMonthValue;
+        }), processedDates.end());
+
+    // 打印移除后的列表
+    // std::cout << "Processed Dates after removal: ";
+    // for (int date : processedDates) {
+    //     std::cout << date << " ";
+    // }
+    // std::cout << std::endl;
+
+    // 比对第一个列表和第三个列表，将第一个列表存在而第三个列表不存在且不大于当前月份最大值的元素插回到第三个列表中
+    for (int date : mday_wheel) {
+        if (std::find(processedDates.begin(), processedDates.end(), date) == processedDates.end() &&
+            date <= currentMaxMonthValue) {
+            processedDates.push_back(date);
+        }
+    }
+
+    // 打印最终列表
+    // std::cout << "Processed Dates after reinsertion: ";
+    // for (int date : processedDates) {
+    //     std::cout << date << " ";
+    // }
+    // std::cout << std::endl;
 }
 /**
  * @brief 用于将时间字段前进到下一个时间点，以便在特定时间点触发任务。
@@ -462,14 +506,35 @@ void CronTimer::Next(int data_type) {
     }
     if(wheel.GetWheelType() >= CronExpression::DT_DAY_OF_MONTH){
         if(wheels_[CronExpression::DT_WEEK].values[wheels_[CronExpression::DT_WEEK].cur_index] != -1){
+            
             wheels_[CronExpression::DT_DAY_OF_MONTH].values = UpdateMDayWithYearMonthWeek(wheels_[CronExpression::DT_WEEK]
                 ,wheels_[CronExpression::DT_MONTH].values[wheels_[CronExpression::DT_MONTH].cur_index]
                 ,wheels_[CronExpression::DT_YEAR].values[wheels_[CronExpression::DT_YEAR].cur_index]).values;
+            // std::cout << "weeks :";
+            // for (int date : wheels_[CronExpression::DT_DAY_OF_MONTH].values) {
+            //     std::cout << date << " ";
+            // }
+            // std::cout << std::endl;
             // std::cout << wheels_[CronExpression::DT_MONTH].values[wheels_[CronExpression::DT_MONTH].cur_index] << std::endl;
         }else{
-            uint64_t max_day = GetMaxMDayFromCurrentMonth();
-            if(wheels_[CronExpression::DT_WEEK].values.size() == max_day)
-                wheels_[CronExpression::DT_DAY_OF_MONTH].values = generateRange(1, max_day);
+            // uint64_t max_day = GetMaxMDayFromCurrentMonth();
+            // if(wheels_[CronExpression::DT_WEEK].values.size() >= max_day)
+            //     wheels_[CronExpression::DT_DAY_OF_MONTH].values = generateRange(1, max_day);
+            // else{
+            //     std::vector<int> &myVector = wheels_[CronExpression::DT_WEEK].values;
+            //     myVector.erase(std::remove_if(myVector.begin(), myVector.end(), [max_day](int value) {
+            //     return value > max_day;}), myVector.end());
+            // }
+            // std::cout << "wheels_[CronExpression::DT_DAY_OF_MONTH].values: ";
+            // for (int date : wheels_[CronExpression::DT_DAY_OF_MONTH].values) {
+            //     std::cout << date << " ";
+            // }
+            // std::cout << std::endl;
+            // std::cout << wheel.cur_index << std::endl;
+            // std::cout << wheel.values[wheel.cur_index] << std::endl;
+            ResetMDayWheel(wheels_[CronExpression::DT_DAY_OF_MONTH].values);
+            // std::cout << wheel.cur_index << std::endl;
+            // std::cout << wheel.values[wheel.cur_index] << std::endl;
         }
     }
     if(wheel.GetWheelType() != CronExpression::DT_WEEK){
@@ -737,7 +802,7 @@ TimerPtr TimerMgr::AddTimer(const std::string& timer_string, FUNC_CALLBACK&& fun
 TimerPtr TimerMgr::AddDelayTimer(int seconds, FUNC_CALLBACK&& func, std::string id, int count) {
     if (stopped_) {
         return nullptr;
-    }
+    } 
 
     assert(("设定的时间段需要大于0！！",seconds > 0));
     seconds = (std::max)(seconds, 1); //至少延迟 1 毫秒

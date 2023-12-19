@@ -41,7 +41,7 @@ id3 = b'333'
 def python_callback1():
     print(PrintTime(),"-------", lib.GetAppointedIDLatestTimeStr(id1).decode(), "-------")
 def python_callback2():
-    print(PrintTime(),"=======", lib.GetAppointedIDLatestTimeStr(id2).decode(), lib.GetAppointedIDLatestTimeStr(id3).decode(), "=======")
+    print(PrintTime(),"=======", lib.GetAppointedIDLatestTimeStr(id2).decode(), lib.GetAppointedIDLatestTimeStr(id1).decode(), lib.GetAppointedIDRemainingTime(id1),"=======")
 def python_callback3():
     print(PrintTime(),"=======", lib.GetAppointedIDLatestTimeStr(id3).decode(), "=======")
 # 将Python中的函数 python_callback 转换为C函数指针，以便它可以被传递给C++函数。
@@ -64,9 +64,9 @@ print(args.cron1)
 print(args.cron2)
 cron_expression =  ((str)(args.cron1)).encode()
 cron_expression1 = ((str)(args.cron2)).encode()
-# print(lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1), ctypes.c_int(-1)))
+print(lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1), ctypes.c_int(-1)))
 print(lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2), ctypes.c_int(100)))
-print(lib.AddDelayTimerTask(60, c_callback3, ctypes.c_char_p(id3), ctypes.c_int(100)))
+# print(lib.AddDelayTimerTask(60, c_callback3, ctypes.c_char_p(id3), ctypes.c_int(100)))
 
 def Thread():
     print("更新线程")

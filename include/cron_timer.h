@@ -69,11 +69,13 @@ public:
 private:
 
 	void Next(int data_type);
+	void ResetMDayWheel(std::vector<int> &originalDates);
 	int GetCurValue(int data_type) const;
 	int SetCurValue(int data, int data_type) const;
 
 private:
 	std::vector<CronWheel> wheels_; // 用于存储不同时间字段的 CronWheel 对象
+	std::vector<int> mday_wheel; 
 	bool over_flowed_; // 用于表示是否发生溢出
 	int count_left_; // 表示定时器剩余的执行次数
 };
