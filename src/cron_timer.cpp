@@ -184,6 +184,19 @@ void BaseTimer::SetIsInList(bool b) { is_in_list_ = b; }
 //执行回调函数并将时间轮索引向前推进
 void BaseTimer::DoFunc(){};
 
+bool BaseTimer::EnableTask(){
+    enable_flag = true;
+    return enable_flag;
+}
+
+bool BaseTimer::DisenableTask(){
+    enable_flag = false;
+    return enable_flag;
+}
+
+bool BaseTimer::GetEnableState(){
+    return enable_flag;
+}
 // std::chrono::system_clock::time_point BaseTimer::GetWheelCurIndexTime() const{};
 
 /**
@@ -200,6 +213,7 @@ CronTimer::CronTimer(TimerMgr& owner, std::vector<CronWheel>&& wheels, FUNC_CALL
     , over_flowed_(false)
     , count_left_(count){
         mday_wheel = wheels_[CronExpression::DT_DAY_OF_MONTH].values;
+        EnableTask();
     }
 
 /**
@@ -304,7 +318,7 @@ void CronTimer::DoFunc() {
 	if (GetIsInList()) {
         // Log("---------任务在列表中-------");
         // 只有当前时间轮索引指向的时间与当前时间差值大于-1才执行回调函数
-        if(compareCurWheelIndexTime() && count_left_ != 0){
+        if(compareCurWheelIndexTime() && count_left_ != 0 && GetEnableState()){
             // Log("---------执行回调-------");
 	        func_();
             // Log("---------执行完毕-------");
@@ -400,6 +414,7 @@ CronWheel UpdateMDayWithYearMonthWeek(CronWheel week_wheel){
     sort(m_day_wheel.values.begin(), m_day_wheel.values.end());
 	return m_day_wheel;
 }
+
 CronWheel UpdateMDayWithYearMonthWeek(CronWheel week_wheel, int month, int year){
     const uint64_t maxday =  GetMaxMDayFromCurrentMonth();
     tm cur_time;
@@ -435,6 +450,7 @@ CronWheel UpdateMDayWithYearMonthWeek(CronWheel week_wheel, int month, int year)
     
 	return m_day_wheel;
 }
+
 std::vector<int> generateRange(int minValue, int maxValue) {
     std::vector<int> result(maxValue - minValue + 1);
     
@@ -443,6 +459,7 @@ std::vector<int> generateRange(int minValue, int maxValue) {
 
     return result;
 }
+
 void CronTimer::ResetMDayWheel(std::vector<int> &processedDates){
     // 当前月份最大值
     int currentMaxMonthValue = GetMaxMDayFromCurrentMonth();
@@ -571,6 +588,7 @@ LaterTimer::LaterTimer(TimerMgr& owner, int seconds, FUNC_CALLBACK&& func, int c
     , count_left_(count)
     , cur_time_(std::chrono::system_clock::now())
 {
+    EnableTask();
     Next();
 }
 /**
@@ -587,7 +605,7 @@ void LaterTimer::DoFunc() {
 			Next();
 			owner_.insert(self);
 		}
-        if(compareCurWheelIndexTime() && count_left_ != 0){
+        if(compareCurWheelIndexTime() && count_left_ != 0 && GetEnableState()){
 	        func_();
         }
 	}
@@ -838,19 +856,10 @@ bool TimerMgr::RemoveAppointedTimer(std::string id) {
         Log("不存在该ID任务",false);
         return false;
     }
-    // std::vector<std::string>::iterator it_ = find(id_.begin(), id_.end(), id);
-    // else std::cout << "找到" << std::endl;
     try
     {
         it->second->Cancel();
         id_pointer.erase(it);
-        // if(it_ == id_.end())
-        // {
-        //     Log("不存在该ID任务",false);
-        //     return false;
-        // }
-        // if(it_ != id_.end())
-        //     id_.erase(it_);
         return true;
     }
     catch(const std::exception& e)
@@ -858,7 +867,59 @@ bool TimerMgr::RemoveAppointedTimer(std::string id) {
         std::cerr << e.what() << '\n';
         return false;
     }
-    
+}
+
+bool TimerMgr::EnableAppointedTask(std::string id) {
+    auto it = id_pointer.find(id);
+    if (it == id_pointer.end()) {
+        Log("不存在该ID任务",false);
+        return false;
+    }
+    try
+    {
+        it->second->EnableTask();
+        return it->second->GetEnableState();
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return false;
+    }
+}
+
+bool TimerMgr::DisenableAppointedTask(std::string id){
+        auto it = id_pointer.find(id);
+    if (it == id_pointer.end()) {
+        Log("不存在该ID任务",false);
+        return false;
+    }
+    try
+    {
+        it->second->DisenableTask();
+        return it->second->GetEnableState();
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return false;
+    }
+}
+
+bool TimerMgr::GetAppointedTaskEnableState(std::string id){
+        auto it = id_pointer.find(id);
+    if (it == id_pointer.end()) {
+        Log("不存在该ID任务",false);
+        return false;
+    }
+    try
+    {
+        return it->second->GetEnableState();
+    }
+    catch(const std::exception& e)
+    {
+        std::cerr << e.what() << '\n';
+        return false;
+    }
 }
 
 // 获取最接近的触发时间点

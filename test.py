@@ -30,10 +30,16 @@ lib.AddTimerTask.restype = bool#指定 AddTimerTask 函数的返回类型。
 lib.StopAppointedTask.restype = ctypes.c_bool
 lib.AddDelayTimerTask.argtypes = [ctypes.c_int, func_t, ctypes.c_char_p, ctypes.c_int]#指定 AddTimerTask 函数的参数类型。
 lib.AddDelayTimerTask.restype = ctypes.c_bool
+
+lib.EnableAppointedTask.argtypes = [ctypes.c_char_p]
+lib.DisenableAppointedTask.argtypes = [ctypes.c_char_p]
 # 设置返回类型为 c_char_p
 lib.GetAppointedIDLatestTimeStr.restype = ctypes.c_char_p
 lib.GetCurrentTimeStr.restype = ctypes.c_char_p
 lib.JudgeIDIsExist.restype = ctypes.c_bool
+lib.EnableAppointedTask.restype = ctypes.c_bool
+lib.DisenableAppointedTask.restype = ctypes.c_bool
+
 id1 = b'301'
 id2 = b'302'
 id3 = b'333'
@@ -68,9 +74,9 @@ cron_expression1 = ((str)(args.cron2)).encode()
 print("插入id1='1'任务：", lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1), ctypes.c_int(-1)))
 print("插入id2='22'任务：",lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2), ctypes.c_int(100)))
 print("插入延时3任务：", lib.AddDelayTimerTask(86400, c_callback3, ctypes.c_char_p(id3), ctypes.c_int(-1)))
-print("移除所有任务", bool(lib.RemoveAll()))
+# print("移除所有任务", bool(lib.RemoveAll()))
 # print("插入id1='1'任务：", lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id1), ctypes.c_int(-1)))
-print("插入id2='22'任务：",lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2), ctypes.c_int(100)))
+# print("插入id2='22'任务：",lib.AddTimerTask(ctypes.c_char_p(cron_expression1), c_callback2, ctypes.c_char_p(id2), ctypes.c_int(100)))
 # print("插入延时3任务：", lib.AddDelayTimerTask(10, c_callback3, ctypes.c_char_p(id3), ctypes.c_int(-1)))
 def Thread():
     print("更新线程")
@@ -93,13 +99,19 @@ count = 0
 while True:
     count = count +1
     # 5s后取消指定id的任务
-    if(count > 100):
+    if(count > 0 and count <= 5):
         pass
+        # print(count)
         # a= lib.StopAppointedTask(ctypes.c_char_p(id2))
         # print("----------------------------------------------")
         # print(lib.JudgeIDIsExist(ctypes.c_char_p(id1)))
         # print("删除-------",lib.StopAppointedTask(ctypes.c_char_p(id1)))
         # print(lib.JudgeIDIsExist(ctypes.c_char_p(id1)))
-        count = 0
+        lib.DisenableAppointedTask(id1)
+        if(count >= 5):
+            print("----------------------------------------------")
+            count = -5
+    else:
+        lib.EnableAppointedTask(id1)
     # lib.AddTimerTask(ctypes.c_char_p(cron_expression), c_callback1, ctypes.c_char_p(id2), ctypes.c_int(10))
     time.sleep(1)

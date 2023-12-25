@@ -38,6 +38,9 @@ public:
 	bool compareCurWheelIndexTime();
 	std::string SetID(std::string id);
 	std::string GetID();
+	bool EnableTask();
+	bool DisenableTask();
+	bool GetEnableState();
 protected:
 	std::list<TimerPtr>::iterator& GetIt();
 	void SetIt(const std::list<TimerPtr>::iterator& it);
@@ -48,6 +51,7 @@ protected:
 	virtual std::chrono::system_clock::time_point GetWheelCurIndexTime() const = 0; //纯虚函数，用于获取当前时间点。
 
 protected:
+	bool enable_flag = true;
 	TimerMgr& owner_; //计时器所属的 TimerMgr 实例
 	FUNC_CALLBACK func_; //回调函数
 	std::list<TimerPtr>::iterator it_; //计时器在列表中的迭代器
@@ -112,6 +116,9 @@ public:
 	TimerPtr AddTimer(const std::string& timer_string, FUNC_CALLBACK&& func, std::string id, int count = RUN_FOREVER);
 	TimerPtr AddDelayTimer(int milliseconds, FUNC_CALLBACK&& func, std::string id, int count = 1);
 	bool RemoveAppointedTimer(std::string id);
+	bool EnableAppointedTask(std::string id);
+	bool DisenableAppointedTask(std::string id);
+	bool GetAppointedTaskEnableState(std::string id);
 	// 获取最接近的触发时间点
 	std::chrono::system_clock::time_point GetNearestTime();
 	size_t Update();

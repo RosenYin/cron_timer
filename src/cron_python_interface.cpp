@@ -142,6 +142,19 @@ bool JudgeIDIsExist(const char* id){
     return mgr->JudgeIDIsExist(idStr);
 }
 
+bool EnableAppointedTask(const char* id){
+    std::string idStr(id);
+    return mgr->EnableAppointedTask(idStr);
+}
 
+bool DisenableAppointedTask(const char* id){
+    std::string idStr(id);
+    return mgr->DisenableAppointedTask(idStr);
+}
+
+bool GetAppointedIDEnableState(const char* id){
+    std::string idStr(id);
+    return mgr->GetAppointedTaskEnableState(idStr);
+}
 
 } // extern "C"
