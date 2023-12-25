@@ -23,12 +23,16 @@
 namespace cron_timer {
 // 是否启用UTC时间
 #define USE_UTC 0
-
+/**
+ * @brief chrono时间点转换为tm结构体
+ * 
+ * @param time_point_ 
+ * @return tm 
+ */
 tm TimePointConvertTm(std::chrono::system_clock::time_point time_point_){
     tm tm_time = {};
     // 将时间点转换为 time_t
 	std::time_t time_ = std::chrono::system_clock::to_time_t(time_point_);
-    // std::cout << time_ << std::endl;
 #if USE_UTC==0
     #ifdef _WIN32
         localtime_s(&tm_time, &time_); // 获取当前本地时间，存在time_now中
@@ -41,7 +45,12 @@ tm TimePointConvertTm(std::chrono::system_clock::time_point time_point_){
 #endif
     return tm_time;
 }
-
+/**
+ * @brief tm结构体转换为time_t类型(long int)
+ * 
+ * @param tm_time_ 
+ * @return time_t 
+ */
 time_t TmConvertTime_t(tm& tm_time_){
     #if USE_UTC == 1
         time_t time_t_ = timegm(&tm_time_);
@@ -50,7 +59,12 @@ time_t TmConvertTime_t(tm& tm_time_){
     #endif
     return time_t_;
 }
-
+/**
+ * @brief 将chrono时间点转换为string并返回
+ * 
+ * @param time_point_ 
+ * @return std::string 
+ */
 std::string GetTimeStr(std::chrono::system_clock::time_point time_point_){
     tm local_tm = TimePointConvertTm(time_point_);
     std::string s(30, '\0');
@@ -87,15 +101,6 @@ uint64_t GetMaxMDayFromCurrentMonth(){
  */
 int64_t GetLatestMDayWithYearMonthWeek(int year, int month, int weekend, int day_offset){
 	struct tm cur_utc_time = TimePointConvertTm(std::chrono::system_clock::now());//创建当前utc时间结构体，用来存放转化成utc的时间
-        // std::cout << "cur_utc_time 时间 年 为：  " << cur_utc_time.tm_year + 1900 << std::endl;
-		// std::cout << "cur_utc_time 时间 周 为：  " << cur_utc_time.tm_wday << std::endl;
-		// std::cout << "cur_utc_time 时间 月 为：  " << cur_utc_time.tm_mon+1  << std::endl;
-		// std::cout << "cur_utc_time 时间 日 为：  " << cur_utc_time.tm_mday << std::endl;
-		// std::cout << "cur_utc_time 时间 时 为：  " << cur_utc_time.tm_hour << std::endl;
-		// std::cout << "cur_utc_time 时间 分 为：  " << cur_utc_time.tm_min << std::endl;
-		// std::cout << "cur_utc_time 时间 秒 为：  " << cur_utc_time.tm_sec << std::endl;
-        // std::cout << "传入的年 为：  " << year << std::endl;
-        // std::cout << "传入的月 为：  " << month << std::endl;
 	tm cur_time;
 	memset(&cur_time, 0, sizeof(cur_time));
 	cur_time.tm_year = year - 1900;
@@ -103,7 +108,6 @@ int64_t GetLatestMDayWithYearMonthWeek(int year, int month, int weekend, int day
 	if(cur_time.tm_mon != cur_utc_time.tm_mon || cur_time.tm_year > cur_utc_time.tm_year)
 		cur_time.tm_mday = 1;
 	else cur_time.tm_mday = cur_utc_time.tm_mday + day_offset;
-    // std::cout << "推断日1 为：  " << month << std::endl;
 
     #if USE_UTC==0
     mktime(&cur_time);
@@ -113,7 +117,6 @@ int64_t GetLatestMDayWithYearMonthWeek(int year, int month, int weekend, int day
     uint64_t currnet_mday;
 	if(weekend >= cur_time.tm_wday){
 		currnet_mday =  cur_time.tm_mday + weekend - cur_time.tm_wday;
-        // std::cout << "最近的日期 为：  " << currnet_mday << std::endl;
     }
 	else
 		currnet_mday =  7 - cur_time.tm_wday + weekend + cur_time.tm_mday;
@@ -140,7 +143,6 @@ BaseTimer::~BaseTimer() {}
  */
 void BaseTimer::Cancel() {
 	if (!GetIsInList()) {
-        // std::cout << "要删除的任务不在任务列表中" << std::endl;
 		return;
 	}
 	//创建一个 shared_ptr 对象 self，以确保在执行取消操作期间计时器对象不会被销毁。
@@ -148,7 +150,6 @@ void BaseTimer::Cancel() {
 	auto self = shared_from_this();
 	//将计时器从 TimerMgr 对象的列表中移除
 	owner_.remove(self);
-    // std::cout << "移除任务成功" << std::endl;
 }
 /**
  * @brief 将当前时间轮索引的时间，与当前时间做差，如果时间差值大于-1,返回true
@@ -160,16 +161,24 @@ bool BaseTimer::compareCurWheelIndexTime(){
     std::chrono::system_clock::time_point startTime = GetWheelCurIndexTime();
     auto currentTime = std::chrono::system_clock::now();
     std::chrono::duration<double> diff = startTime  - currentTime;
-    // std::cout << "剩余时间" << diff.count() << std::endl;
     if(diff.count() > -1) return true;
     else return false;
 }
-
+/**
+ * @brief 设定ID
+ * 
+ * @param id 
+ * @return std::string 
+ */
 std::string BaseTimer::SetID(std::string id){
     id_ = id;
     return id_;
 }
-
+/**
+ * @brief 获取ID
+ * 
+ * @return std::string 
+ */
 std::string BaseTimer::GetID(){
     return id_;
 }
@@ -183,20 +192,36 @@ bool BaseTimer::GetIsInList() const { return is_in_list_; }
 void BaseTimer::SetIsInList(bool b) { is_in_list_ = b; } 
 //执行回调函数并将时间轮索引向前推进
 void BaseTimer::DoFunc(){};
-
+/**
+ * @brief 使能任务
+ * 
+ * @return true 
+ * @return false 
+ */
 bool BaseTimer::EnableTask(){
     enable_flag = true;
     return enable_flag;
 }
-
+/**
+ * @brief 失能任务
+ * 
+ * @return true 
+ * @return false 
+ */
 bool BaseTimer::DisenableTask(){
     enable_flag = false;
     return enable_flag;
 }
-
+/**
+ * @brief 获取任务使能状态
+ * 
+ * @return true 
+ * @return false 
+ */
 bool BaseTimer::GetEnableState(){
     return enable_flag;
 }
+
 // std::chrono::system_clock::time_point BaseTimer::GetWheelCurIndexTime() const{};
 
 /**
@@ -221,15 +246,8 @@ CronTimer::CronTimer(TimerMgr& owner, std::vector<CronWheel>&& wheels, FUNC_CALL
  * 
  */
 void CronTimer::InitWheelIndex(){
-    // std::cout << std::endl;
-    // std::cout<<"初始化wheel索引....."<<std::endl;
     // 获取当前时间列表
     std::vector<int> cur_time = TimerMgr::GetNowTimeConvertVetcor();
-    // std::cout << std::endl;
-    // for (std::vector<int>::iterator i = cur_time.begin(); i != cur_time.end(); i++){
-    //     std::cout<<*i<<std::endl;
-    // }
-    // std::cout << std::endl;
     // 创建时间轮标志位，用来判断上一个时间轮是否大于或者小于当前时间
     // 如果为true则应该令之后的时间轮的索引指向为最初(0)
     bool last_wheel_less_all = false;
@@ -262,7 +280,6 @@ void CronTimer::InitWheelIndex(){
                         ++wheels_[i+1].cur_index;
                     }
                 }
-                
                 break;
             }
             else if(wheel.values[wheel.cur_index] < cur_time[i]){
@@ -290,56 +307,26 @@ void CronTimer::InitWheelIndex(){
             }
         }
     }
-        // std::cout<<std::endl;
-		// for (std::vector<CronWheel>::iterator it = wheels_.begin(); it != wheels_.end(); it++)
-		// {
-		// 	for (std::vector<int>::iterator it1 = (*it).values.begin(); it1 != (*it).values.end(); it1++)
-		// 	{
-		// 		std::cout << (*it1) << " ";
-				
-		// 	}
-		// 	std::cout <<"wheel_type:" <<(*it).GetWheelType()  << "  ";
-        //     std::cout <<"wheel_cur_index:" <<(*it).cur_index  << "  ";
-		// 	std::cout <<"wheel_max:" <<(*it).max_value  << "  ";
-		// 	std::cout <<"wheel_min:" <<(*it).min_value  << "  ";
-		// 	std::cout <<std::endl<< "---------------------------";
-		// 	std::cout << std::endl;
-		// }
-		// std::cout << "<<<<<<<<<<<<<<<<<<<<<--------------------------->>>>>>>>>>>>>>>>>>>>>";
-		// std::cout << std::endl;
-    // for (std::vector<CronWheel>::iterator i = wheels_.begin(); i != wheels_.end(); i++){
-    //     std::cout<<(*i).cur_index << " - "<<(*i).values[(*i).cur_index] << std::endl;
-    // }
-    // std::cout << std::endl;
 }
 
 void CronTimer::DoFunc() {
 	// 当任务在列表中时
 	if (GetIsInList()) {
-        // Log("---------任务在列表中-------");
         // 只有当前时间轮索引指向的时间与当前时间差值大于-1才执行回调函数
         if(compareCurWheelIndexTime() && count_left_ != 0 && GetEnableState()){
-            // Log("---------执行回调-------");
 	        func_();
-            // Log("---------执行完毕-------");
         }
 		auto self = shared_from_this();
 		bool error = owner_.remove(self); // 将当前计时器从计时器管理器的列表中移除
-        // std::cout << "是否移除成功：" << error << std::endl;
         if(!error)
             Log("移除失败");
 		 // 将时间字段前进到下一个时间点，以便在下一个时间点触发任务,从s开始
 		// 检查是否需要继续触发计时器
         Next(CronExpression::DT_SECOND);
 		if (count_left_ != 0 && !over_flowed_) {
-            // std::cout << "溢出--标志：" << over_flowed_ << std::endl;
-            // Log("---------即将重新插入-------");
-            
 			owner_.insert(self); // 将计时器重新插入计时器管理器的列表中，以便在下一个时间点再次触发
-            // Log("---------重新插入完毕-------");
 		}
 	}
-    // Log("任务不在列表");
 }
 /**
  * @brief Get the Cur Time object
@@ -363,25 +350,15 @@ std::chrono::system_clock::time_point CronTimer::GetWheelCurIndexTime()const{
 		next_tm.tm_wday = GetCurValue(CronExpression::DT_WEEK);
     next_tm.tm_mon = GetCurValue(CronExpression::DT_MONTH) - 1;
     next_tm.tm_year = GetCurValue(CronExpression::DT_YEAR) - 1900;
-        // std::cout << "wheel时间 年 为：  " << next_tm.tm_year + 1900 << std::endl;
-		// std::cout << "wheel时间 周 为：  " << next_tm.tm_wday << std::endl;
-		// std::cout << "wheel时间 月 为：  " << next_tm.tm_mon+1  << std::endl;
-		// std::cout << "wheel时间 日 为：  " << next_tm.tm_mday << std::endl;
-		// std::cout << "wheel时间 时 为：  " << next_tm.tm_hour << std::endl;
-		// std::cout << "wheel时间 分 为：  " << next_tm.tm_min << std::endl;
-		// std::cout << "wheel时间 秒 为：  " << next_tm.tm_sec << std::endl;
     time_t wheel_time_t = TmConvertTime_t(next_tm);
-        // std::cout << "wheel时间为：  " << next_tm.tm_year + 1900 << std::endl;
-		// std::cout << "wheel时间为：  " << next_tm.tm_wday << std::endl;
-		// std::cout << "wheel时间为：  " << next_tm.tm_mon+1  << std::endl;
-		// std::cout << "wheel时间为：  " << next_tm.tm_mday << std::endl;
-		// std::cout << "wheel时间为：  " << next_tm.tm_hour << std::endl;
-		// std::cout << "wheel时间为：  " << next_tm.tm_min << std::endl;
-		// std::cout << "wheel时间为：  " << next_tm.tm_sec << std::endl;
-		// std::cout <<"judge func wheel_time_t: " <<wheel_time_t << std::endl;
     return std::chrono::system_clock::from_time_t(wheel_time_t);
 }
-
+/**
+ * @brief 输入星期的列表，根据当前月份和年份，推断所有可能的日期，插入到列表并返回(已排序)
+ * 
+ * @param week_wheel 
+ * @return CronWheel 
+ */
 CronWheel UpdateMDayWithYearMonthWeek(CronWheel week_wheel){
    struct tm cur_utc_time = TimePointConvertTm(std::chrono::system_clock::now());//创建当前utc时间结构体，用来存放转化成utc的时间
     const uint64_t maxday =  GetMaxMDayFromCurrentMonth();
@@ -404,7 +381,6 @@ CronWheel UpdateMDayWithYearMonthWeek(CronWheel week_wheel){
             currnet_mday =  cur_time.tm_mday + week_wheel_it - cur_time.tm_wday;
         else
             currnet_mday =  7 - cur_time.tm_wday + week_wheel_it + cur_time.tm_mday;
-        // cout<< cur_time.tm_mday << endl;
         while(cur_time.tm_mday < maxday){
             m_day_wheel.values.emplace_back(currnet_mday);
             cur_time.tm_mday = currnet_mday + 7;
@@ -414,7 +390,14 @@ CronWheel UpdateMDayWithYearMonthWeek(CronWheel week_wheel){
     sort(m_day_wheel.values.begin(), m_day_wheel.values.end());
 	return m_day_wheel;
 }
-
+/**
+ * @brief 输入星期的列表，输入指定月份年份，推断所有可能的日期，插入到列表并返回(已排序)
+ * 
+ * @param week_wheel 
+ * @param month 
+ * @param year 
+ * @return CronWheel 
+ */
 CronWheel UpdateMDayWithYearMonthWeek(CronWheel week_wheel, int month, int year){
     const uint64_t maxday =  GetMaxMDayFromCurrentMonth();
     tm cur_time;
@@ -436,7 +419,6 @@ CronWheel UpdateMDayWithYearMonthWeek(CronWheel week_wheel, int month, int year)
             currnet_mday =  cur_time.tm_mday + week_wheel_it - cur_time.tm_wday;
         else
             currnet_mday =  7 - cur_time.tm_wday + week_wheel_it + cur_time.tm_mday;
-        // cout<< cur_time.tm_mday << endl;
         while(cur_time.tm_mday <= maxday){
             m_day_wheel.values.emplace_back(currnet_mday);
             cur_time.tm_mday = currnet_mday + 7;
@@ -444,13 +426,16 @@ CronWheel UpdateMDayWithYearMonthWeek(CronWheel week_wheel, int month, int year)
         }
     }
     sort(m_day_wheel.values.begin(), m_day_wheel.values.end());
-    // for (auto it : m_day_wheel.values){
-    //     std::cout<< cur_time.tm_mon+1 <<"月" <<it << std::endl;
-    // }
     
 	return m_day_wheel;
 }
-
+/**
+ * @brief 生成指定范围列表
+ * 
+ * @param minValue 
+ * @param maxValue 
+ * @return std::vector<int> 
+ */
 std::vector<int> generateRange(int minValue, int maxValue) {
     std::vector<int> result(maxValue - minValue + 1);
     
@@ -459,33 +444,23 @@ std::vector<int> generateRange(int minValue, int maxValue) {
 
     return result;
 }
-
+/**
+ * @brief 重新指定月份时间轮，如果在12月设定时间轮为5-31,那么在第二年二月份会出现任务继续执行到三月2号或者三月1号的情况(闰年或者非闰年)
+ * 为了避免这种情况，就需要动态调整月份时间轮，根据设定的时间轮，以及当月日期最大值，判断是否需要删去某日或者重新加入
+ * 
+ * @param processedDates 
+ */
 void CronTimer::ResetMDayWheel(std::vector<int> &processedDates){
     // 当前月份最大值
     int currentMaxMonthValue = GetMaxMDayFromCurrentMonth();
 
     // 第三个列表，初始填充为第一个列表的值
     processedDates = mday_wheel;
-    // 打印初始列表
-    // std::cout << "Processed Dates initially: ";
-    // for (int date : processedDates) {
-    //     std::cout << date << " ";
-    // }
-    // std::cout << std::endl;
-
     // 移除大于当前月份最大值的元素
     processedDates.erase(std::remove_if(processedDates.begin(), processedDates.end(), 
         [currentMaxMonthValue](int value) {
             return value > currentMaxMonthValue;
         }), processedDates.end());
-
-    // 打印移除后的列表
-    // std::cout << "Processed Dates after removal: ";
-    // for (int date : processedDates) {
-    //     std::cout << date << " ";
-    // }
-    // std::cout << std::endl;
-
     // 比对第一个列表和第三个列表，将第一个列表存在而第三个列表不存在且不大于当前月份最大值的元素插回到第三个列表中
     for (int date : mday_wheel) {
         if (std::find(processedDates.begin(), processedDates.end(), date) == processedDates.end() &&
@@ -493,13 +468,6 @@ void CronTimer::ResetMDayWheel(std::vector<int> &processedDates){
             processedDates.push_back(date);
         }
     }
-
-    // 打印最终列表
-    // std::cout << "Processed Dates after reinsertion: ";
-    // for (int date : processedDates) {
-    //     std::cout << date << " ";
-    // }
-    // std::cout << std::endl;
 }
 /**
  * @brief 用于将时间字段前进到下一个时间点，以便在特定时间点触发任务。
@@ -509,7 +477,6 @@ void CronTimer::ResetMDayWheel(std::vector<int> &processedDates){
  * @param data_type 
  */
 void CronTimer::Next(int data_type) {
-// std::cout << "类型为"<< data_type << std::endl;
     if (data_type >= CronExpression::DT_MAX) {
         // 溢出了表明此定时器已经失效，不应该再被执行
         over_flowed_ = true;
@@ -526,36 +493,12 @@ void CronTimer::Next(int data_type) {
             wheels_[CronExpression::DT_DAY_OF_MONTH].values = UpdateMDayWithYearMonthWeek(wheels_[CronExpression::DT_WEEK]
                 ,wheels_[CronExpression::DT_MONTH].values[wheels_[CronExpression::DT_MONTH].cur_index]
                 ,wheels_[CronExpression::DT_YEAR].values[wheels_[CronExpression::DT_YEAR].cur_index]).values;
-            // std::cout << "weeks :";
-            // for (int date : wheels_[CronExpression::DT_DAY_OF_MONTH].values) {
-            //     std::cout << date << " ";
-            // }
-            // std::cout << std::endl;
-            // std::cout << wheels_[CronExpression::DT_MONTH].values[wheels_[CronExpression::DT_MONTH].cur_index] << std::endl;
         }else{
-            // uint64_t max_day = GetMaxMDayFromCurrentMonth();
-            // if(wheels_[CronExpression::DT_WEEK].values.size() >= max_day)
-            //     wheels_[CronExpression::DT_DAY_OF_MONTH].values = generateRange(1, max_day);
-            // else{
-            //     std::vector<int> &myVector = wheels_[CronExpression::DT_WEEK].values;
-            //     myVector.erase(std::remove_if(myVector.begin(), myVector.end(), [max_day](int value) {
-            //     return value > max_day;}), myVector.end());
-            // }
-            // std::cout << "wheels_[CronExpression::DT_DAY_OF_MONTH].values: ";
-            // for (int date : wheels_[CronExpression::DT_DAY_OF_MONTH].values) {
-            //     std::cout << date << " ";
-            // }
-            // std::cout << std::endl;
-            // std::cout << wheel.cur_index << std::endl;
-            // std::cout << wheel.values[wheel.cur_index] << std::endl;
             ResetMDayWheel(wheels_[CronExpression::DT_DAY_OF_MONTH].values);
-            // std::cout << wheel.cur_index << std::endl;
-            // std::cout << wheel.values[wheel.cur_index] << std::endl;
         }
     }
     if(wheel.GetWheelType() != CronExpression::DT_WEEK){
         if (wheel.cur_index == wheel.values.size() - 1) {
-        // std::cout << wheel.values[wheel.cur_index] << std::endl;
             wheel.cur_index = 0;
             Next(data_type + 1);
         } else {
@@ -623,8 +566,6 @@ std::chrono::system_clock::time_point LaterTimer::GetWheelCurIndexTime()const{
 void LaterTimer::Next() {
     // 获取当前时间
     auto time_now = std::chrono::system_clock::now();
-    // std::cout << "time_now: " << GetTimeStr(time_now) << std::endl;
-    // std::cout << "cur_time_1: " << GetTimeStr(GetWheelCurIndexTime()) << std::endl;
     while (true) {
         // 不断递增 cur_time_ 成员，直到其值大于当前系统时间为止，以确保下一个触发时间点在未来。
         // 这个方法会不断增加 cur_time_ 的值，直到满足延迟条件。
@@ -632,9 +573,7 @@ void LaterTimer::Next() {
             
             break;
         }
-        // cur_time_ = time_now + std::chrono::milliseconds(mill_seconds_);
         cur_time_ = time_now + std::chrono::seconds(seconds_);
-        // std::cout << "cur_time_2: " << GetTimeStr(GetWheelCurIndexTime()) << std::endl;
     }
 }
 
@@ -658,7 +597,6 @@ TimerMgr* TimerMgr::GetInstance(){
     return &mgr_;
 }
 
-
 /**
  * @brief 用于停止所有定时器的执行。
  * 它会清空定时器列表，并将 stopped_ 标记设置为 true，表示停止所有定时器。
@@ -670,7 +608,12 @@ bool TimerMgr::Stop() {
     stopped_ = true;
     return stopped_;
 }
-
+/**
+ * @brief 移除所有任务
+ * 
+ * @return true 
+ * @return false 
+ */
 bool TimerMgr::RemoveAll() {
     timers_.clear();
     id_pointer.clear();
@@ -679,7 +622,12 @@ bool TimerMgr::RemoveAll() {
     else
         return false;
 }
-
+/**
+ * @brief 获得指定ID任务的最近触发时间
+ * 
+ * @param id 
+ * @return std::string 
+ */
 std::string TimerMgr::GetAppointedIDLatestTimeStr(std::string id){
     auto it = id_pointer.find(id);
     if (it == id_pointer.end()) {
@@ -689,7 +637,12 @@ std::string TimerMgr::GetAppointedIDLatestTimeStr(std::string id){
     auto latest_time = it->second->GetWheelCurIndexTime();
     return GetTimeStr(latest_time);
 }
-
+/**
+ * @brief 获得指定ID任务的下一次执行剩余时间
+ * 
+ * @param id 
+ * @return int 
+ */
 int TimerMgr::GetAppointedIDRemainingTime(std::string id){
     auto it = id_pointer.find(id);
     if (it == id_pointer.end()) {
@@ -700,13 +653,18 @@ int TimerMgr::GetAppointedIDRemainingTime(std::string id){
     std::chrono::duration<double> diff = latest_time - std::chrono::system_clock::now();
     return round(diff.count());
 }
-
+/**
+ * @brief 判断指定ID任务是否存在任务列表
+ * 
+ * @param id 
+ * @return true 
+ * @return false 
+ */
 bool TimerMgr::JudgeIDIsExist(std::string id){
     auto it = id_pointer.find(id);
     if (it == id_pointer.end()) {
         return false;
     }
-    // std::cout << "*it: "<< (*it).first << std::endl;    
     return true;
 }
 /**
@@ -768,44 +726,19 @@ TimerPtr TimerMgr::AddTimer(const std::string& timer_string, FUNC_CALLBACK&& fun
             }
         }
     }
-    
-        // std::cout<<std::endl;
-		// for (std::vector<CronWheel>::iterator it = wheels.begin(); it != wheels.end(); it++)
-		// {
-		// 	for (std::vector<int>::iterator it1 = (*it).values.begin(); it1 != (*it).values.end(); it1++)
-		// 	{
-		// 		std::cout << (*it1) << " ";
-				
-		// 	}
-		// 	std::cout <<"wheel_type:" <<(*it).GetWheelType()  << "  ";
-        //     std::cout <<"wheel_cur_index:" <<(*it).cur_index  << "  ";
-		// 	std::cout <<"wheel_max:" <<(*it).max_value  << "  ";
-		// 	std::cout <<"wheel_min:" <<(*it).min_value  << "  ";
-		// 	std::cout <<std::endl<< "---------------------------";
-		// 	std::cout << std::endl;
-		// }
-		// std::cout << "<<<<<<<<<<<<<<<<<<<<<--------------------------->>>>>>>>>>>>>>>>>>>>>";
-		// std::cout << std::endl;
-
     //创建 CronTimer 对象，并将其插入到定时器管理器中，最后返回该定时器对象的指针。
     bool time_reasonable_ = compareMaxSetTime(wheels);
     if(time_reasonable_)
     {
         bool isWheelsDuplicate;
-        // std::vector<std::string>::iterator it = find(id_.begin(), id_.end(), id);
-        // if (it == id_.end()) isWheelsDuplicate = false;
-        // else isWheelsDuplicate = true;
-
         auto it = id_pointer.find(id);
         if (it == id_pointer.end())    isWheelsDuplicate = false; 
         else    isWheelsDuplicate = true;
         if(!isWheelsDuplicate){
             wheels_gather_.emplace_back(wheels);
-            // id_.emplace_back(id);
             auto p = std::make_shared<CronTimer>(*this, std::move(wheels), std::move(func), count, id);
             id_pointer.insert(std::make_pair(id, p));
             p->InitWheelIndex();
-            // p->Next(CronExpression::DT_SECOND);
             insert(p);
             return p;
         }else{
@@ -833,9 +766,6 @@ TimerPtr TimerMgr::AddDelayTimer(int seconds, FUNC_CALLBACK&& func, std::string 
     assert(("设定的时间段需要大于0！！",seconds > 0));
     seconds = (std::max)(seconds, 1); //至少延迟 1 毫秒
     bool isWheelsDuplicate;
-    // std::vector<std::string>::iterator it = find(id_.begin(), id_.end(), id);
-    // if (it == id_.end())    isWheelsDuplicate = false; 
-    // else    isWheelsDuplicate = true;
     auto it = id_pointer.find(id);
     if (it == id_pointer.end())    isWheelsDuplicate = false; 
     else    isWheelsDuplicate = true;
@@ -843,13 +773,18 @@ TimerPtr TimerMgr::AddDelayTimer(int seconds, FUNC_CALLBACK&& func, std::string 
     if(!isWheelsDuplicate){
         auto p = std::make_shared<LaterTimer>(*this, seconds, std::move(func), count, id);
         id_pointer.insert(std::make_pair(id, p));
-        // id_.emplace_back(id);
         insert(p);
         p->DoFunc();
         return p;
     }else return nullptr;
 }
-
+/**
+ * @brief 移除指定ID任务
+ * 
+ * @param id 
+ * @return true 
+ * @return false 
+ */
 bool TimerMgr::RemoveAppointedTimer(std::string id) {
     auto it = id_pointer.find(id);
     if (it == id_pointer.end()) {
@@ -868,7 +803,13 @@ bool TimerMgr::RemoveAppointedTimer(std::string id) {
         return false;
     }
 }
-
+/**
+ * @brief 使能指定ID任务
+ * 
+ * @param id 
+ * @return true 
+ * @return false 
+ */
 bool TimerMgr::EnableAppointedTask(std::string id) {
     auto it = id_pointer.find(id);
     if (it == id_pointer.end()) {
@@ -886,7 +827,13 @@ bool TimerMgr::EnableAppointedTask(std::string id) {
         return false;
     }
 }
-
+/**
+ * @brief 失能指定ID任务
+ * 
+ * @param id 
+ * @return true 
+ * @return false 
+ */
 bool TimerMgr::DisenableAppointedTask(std::string id){
         auto it = id_pointer.find(id);
     if (it == id_pointer.end()) {
@@ -904,7 +851,13 @@ bool TimerMgr::DisenableAppointedTask(std::string id){
         return false;
     }
 }
-
+/**
+ * @brief 获得指定任务的使能状态
+ * 
+ * @param id 
+ * @return true 
+ * @return false 
+ */
 bool TimerMgr::GetAppointedTaskEnableState(std::string id){
         auto it = id_pointer.find(id);
     if (it == id_pointer.end()) {
@@ -933,7 +886,11 @@ std::chrono::system_clock::time_point TimerMgr::GetNearestTime() {
         return it->first;
     }
 }
-
+/**
+ * @brief 更新
+ * 
+ * @return size_t 
+ */
 size_t TimerMgr::Update() {
     //获取当前系统时间 time_now。
     auto time_now = std::chrono::system_clock::now();
@@ -942,29 +899,19 @@ size_t TimerMgr::Update() {
         auto expire_time = it->first;
         auto& timer_list = it->second;
         if (expire_time > time_now) {
-            // Log("----------------------------------------时间大于");
             break;
         }
 
         // 如果某个定时器任务的触发时间小于当前系统时间，执行该任务
         while (!timer_list.empty()) {
-            // std::cout << "update timers_list 长度===__1---为： "<< timer_list.size() << std::endl;
             auto p = *timer_list.begin();
-            // Log("即将执行回调");
             p->DoFunc();
-            // Log("执行完毕");
-            // std::cout << "update timers_list 长度===__1---为： "<< timer_list.size() << std::endl;
             ++count;
         }
         // 将其从列表中移除。
-        // std::cout << "update timers 长度++++为： "<< timers_.size() << std::endl;
         it = timers_.erase(it);
-        // std::cout << "update timers 长度 为： "<< timers_.size() << std::endl;
-        // Log("============移除");
     }
     // 返回执行的任务数量
-    // std::cout << "update 执行次数为： "<< count << std::endl;
-    // std::cout << "update timers 长度-============为： "<< timers_.size() << std::endl;
     return count;
 }
 
@@ -986,18 +933,13 @@ void TimerMgr::insert(const TimerPtr& p) {
     auto it = timers_.find(t);
     // 如果不存在，创建一个空的定时器列表。
     if (it == timers_.end()) {
-        // Log("+++++++++++++++++++++++新建一个定时器++++++++++++++++++++++++++++++");
         std::list<TimerPtr> l;
         timers_.insert(std::make_pair(t, l));
         it = timers_.find(t);
-        // std::cout << "insert  时间列表中时间 it 为： "<< TimePointConvertInteger(it->first) << std::endl;
     }
-    // std::cout << "insert timers 长度 为： "<< timers_.size() << std::endl;
-    
     // 将定时器插入到定时器列表中，然后设置相应的标志，表示已经在列表中。
     auto& l = it->second;
     p->SetIt(l.insert(l.end(), p));
-    // std::cout << "insert  list长度  为： "<< l.size() << std::endl;
     p->SetIsInList(true);
 
 }
@@ -1009,26 +951,21 @@ bool TimerMgr::remove(const TimerPtr& p) {
     // 获取定时器的触发时间点 t。
     auto t = p->GetWheelCurIndexTime();
     // 查找 timers_ 中是否存在该触发时间点，以及是否存在定时器列表。
-    // std::cout << "remove timers 长度++++为： "<< timers_.size() << std::endl;
     auto it = timers_.find(t);
     if (it == timers_.end()) {
-        // Log("timers_中不存在触发时间点");
         assert(("timers_中不存在触发时间点",false));
         return false;
     }
 
     auto& l = it->second;
     if (p->GetIt() == l.end()) {
-        // Log("定时器列表为空");
         assert(("定时器列表为空",false));
         return false;
     }
     // 从定时器列表中移除定时器，并更新相应的标志
     l.erase(p->GetIt());
-    // std::cout << "remove l 长度++++为： "<< l.size() << std::endl;
     p->SetIt(l.end());
     p->SetIsInList(false);
-    // Log("移除完毕");
     return true;
 
 }
@@ -1047,7 +984,6 @@ bool TimerMgr::compareMaxSetTime(const std::vector<CronWheel>& wheels){
     const std::chrono::system_clock::time_point startTime = GetWheelsMaxTimePoint(wheels);
     auto currentTime = std::chrono::system_clock::now();
     std::chrono::duration<double> diff = startTime  - currentTime;
-    // std::cout <<  "时间轮最大时间与当前时间差值： " <<std::fixed<<std::setprecision(5)<< diff.count() << std::endl;
     if(diff.count() > -1) return true;
     else return false;
 }
@@ -1073,14 +1009,6 @@ std::chrono::system_clock::time_point TimerMgr::GetWheelsMaxTimePoint(std::vecto
     next_tm.tm_mon = wheels[CronExpression::DATA_TYPE::DT_MONTH].max_value - 1;
     next_tm.tm_year = wheels[CronExpression::DATA_TYPE::DT_YEAR].max_value - 1900;
     time_t wheel_time_t = TmConvertTime_t(next_tm);
-
-        // std::cout << "wheel最大时间为：  " << next_tm.tm_year + 1900 << std::endl;
-		// std::cout << "wheel最大时间为：  " << next_tm.tm_wday << std::endl;
-		// std::cout << "wheel最大时间为：  " << next_tm.tm_mon + 1 << std::endl;
-		// std::cout << "wheel最大时间为：  " << next_tm.tm_mday << std::endl;
-		// std::cout << "wheel最大时间为：  " << next_tm.tm_hour << std::endl;
-		// std::cout << "wheel最大时间为：  " << next_tm.tm_min << std::endl;
-        // std::cout<<"max wheel_time_t: " << wheel_time_t << std::endl;
     return std::chrono::system_clock::from_time_t(wheel_time_t);
 }
 /**
@@ -1132,13 +1060,6 @@ int64_t TimerMgr::GetNowTimeSecond(){
 std::vector<int> TimerMgr::GetNowTimeConvertVetcor(){
     tm local_tm = TimePointConvertTm(std::chrono::system_clock::now());
     std::vector<int> cur_time;
-    // std::cout << "当前年为：  " << local_tm.tm_year + 1900 << std::endl;
-	// std::cout << "当前周为：  " << local_tm.tm_wday << std::endl;
-	// std::cout << "当前月为：  " << local_tm.tm_mon + 1 << std::endl;
-	// std::cout << "当前日为：  " << local_tm.tm_mday << std::endl;
-	// std::cout << "当前时为：  " << local_tm.tm_hour << std::endl;
-	// std::cout << "当前分为：  " << local_tm.tm_min << std::endl;
-	// std::cout << "当前秒为：  " << local_tm.tm_sec << std::endl;
     cur_time.emplace_back(local_tm.tm_sec);
     cur_time.emplace_back(local_tm.tm_min);
     cur_time.emplace_back(local_tm.tm_hour);

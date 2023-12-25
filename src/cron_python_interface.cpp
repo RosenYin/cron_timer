@@ -141,17 +141,35 @@ bool JudgeIDIsExist(const char* id){
     std::string idStr(id);
     return mgr->JudgeIDIsExist(idStr);
 }
-
+/**
+ * @brief 使能指定ID任务
+ * 
+ * @param id 
+ * @return true 
+ * @return false 
+ */
 bool EnableAppointedTask(const char* id){
     std::string idStr(id);
     return mgr->EnableAppointedTask(idStr);
 }
-
+/**
+ * @brief 失能指定ID任务
+ * 
+ * @param id 
+ * @return true 
+ * @return false 
+ */
 bool DisenableAppointedTask(const char* id){
     std::string idStr(id);
     return mgr->DisenableAppointedTask(idStr);
 }
-
+/**
+ * @brief Get the Appointed I D Enable State object
+ * 
+ * @param id 
+ * @return true 
+ * @return false 
+ */
 bool GetAppointedIDEnableState(const char* id){
     std::string idStr(id);
     return mgr->GetAppointedTaskEnableState(idStr);

@@ -134,7 +134,7 @@ std::vector<std::string> Text::ParseParam(const std::string& is, char c) {
 }
 
 /**
- * @brief // 将一个字符串按照给定的字符 c 切分成子字符串，但是不返回结果，而是将结果存储在传入的字符串向量 result 中。
+ * @brief 将一个字符串按照给定的字符 c 切分成子字符串，但是不返回结果，而是将结果存储在传入的字符串向量 result 中。
  * 如果字符串中不存在分隔符 c，则会在字符串向量中包含一个空字符串。
  * 方法返回生成的子字符串数量。
  * 主要用来切分使用逗号分隔的字符串，连续的逗号算作多个分隔符。
@@ -236,17 +236,9 @@ bool CronExpression::GetValues(const std::string& input, DATA_TYPE data_type, st
 		}
 	} else if (input.find_first_of(CRON_SEPERATOR_UNSPECIFIED) != std::string::npos) {
 		if(data_type == DT_DAY_OF_MONTH){
-			// auto pair_range = GetRangeFromType(data_type);
-			// for (auto i = pair_range.first; i <= pair_range.second; ++i) {
-			// 	values.push_back(i);
-			// }
 			values.push_back(-1);
 		}
 		else if(data_type == DT_WEEK){
-			// auto pair_range = GetRangeFromType(data_type);
-			// for (auto i = pair_range.first; i <= pair_range.second; ++i) {
-			// 	values.push_back(i);
-			// }
 			values.push_back(-1);
 		}
 		else {
