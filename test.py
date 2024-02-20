@@ -45,7 +45,14 @@ id2 = b'302'
 id3 = b'333'
 # Define a simple Python function to be called from C++
 def python_callback1():
-    print(PrintTime(),"-------", lib.GetAppointedIDLatestTimeStr(id1).decode(), "-------")
+    count = 0
+    print(PrintTime(),"--------", lib.GetAppointedIDLatestTimeStr(id1).decode(),"-------")
+    while True:
+        print(PrintTime(),"--------", lib.GetAppointedIDLatestTimeStr(id1).decode(),"=======")
+        count = count + 1
+        if(count > 10):
+            break
+        time.sleep(1)
 def python_callback2():
     # print(PrintTime(),"=======", lib.GetAppointedIDLatestTimeStr(id2).decode(), lib.GetAppointedIDLatestTimeStr(id1).decode(), lib.GetAppointedIDRemainingTime(id1),"=======")
     print(PrintTime(),"=======", lib.GetAppointedIDLatestTimeStr(id2).decode(),"=======")
@@ -59,7 +66,7 @@ c_callback3 = func_t(python_callback3)
 # 增加定时任务
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('--cron1', default= '0 0 0 * * ? 2023')     # add_argument()指定程序可以接受的命令行选项
+parser.add_argument('--cron1', default= '0/3 * * * * ? 2024')     # add_argument()指定程序可以接受的命令行选项
 parser.add_argument('--cron2', default= '0 0 12 ? * * 2023')     # add_argument()指定程序可以接受的命令行选项
 args = parser.parse_args()      # parse_args()从指定的选项中返回一些数据
 print(args)
