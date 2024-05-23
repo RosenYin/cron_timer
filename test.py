@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#codeing =utf-8 
 import ctypes
 import os
 import _thread

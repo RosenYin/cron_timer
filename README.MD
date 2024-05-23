@@ -1,6 +1,10 @@
 # 定时任务
 
-参照代码库：<https://github.com/yongxin-ms/cron_timer.git>
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/license/MIT)
+![ubuntu](https://img.shields.io/badge/Ubuntu-20.04-orange.svg)
+![cmake](https://img.shields.io/badge/CMake-2.28.0-red.svg)
+
+**参照代码库**：<https://github.com/yongxin-ms/cron_timer.git>
 
 本人只是在其上修补了一些bug以及重构一部分代码
 
@@ -112,8 +116,11 @@ python3 ./test.py --cron1 "0 * * ? * * 2023" # 也可以只输入一个参数，
 python3 ./test.py
 ```
 
+**注**: `argparse, ctypes, os, _thread, time`是python自带标准库
+
 ```python
 #!/usr/bin/env python3
+#codeing =utf-8 
 import ctypes
 import os
 import _thread
